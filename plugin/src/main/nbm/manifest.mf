@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+OpenIDE-Module: org.crash/0
+OpenIDE-Module-Install: org/crsh/visualvm/Installer.class
+OpenIDE-Module-Localizing-Bundle: org/crsh/visualvm/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0.0
+OpenIDE-Module-Module-Dependencies: com.sun.tools.visualvm.core/0 > 1.4, com.sun.tools.visualvm.application/0 > 1.4

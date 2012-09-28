@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>crash-visualvm</groupId>
+  <artifactId>crash-visualvm</artifactId>
+  <packaging>pom</packaging>
+  <version>1.0.0-SNAPSHOT</version>
+  <name>Crash VisualVM Plugin</name>
+
+  <properties>
+    <netbeans.version>RELEASE72</netbeans.version>
+    <visualvm.version>1.4</visualvm.version>
+    <crash.version>1.1.0-cr2-SNAPSHOT</crash.version>
+    <nbm.plugin.version>3.8</nbm.plugin.version>
+    <jar.plugin.version>2.2</jar.plugin.version>
+  </properties>
+
+  <modules>
+    <module>plugin</module>
+  </modules>
+
+  <licenses>
+    <license>
+      <name>GNU General Public License, version 2</name>
+      <url>http://opensource.org/licenses/GPL-2.0</url>
+    </license>
+  </licenses>
+
+  <url>http://julienviet.com/crash/</url>
+
+  <dependencyManagement>
+    <dependencies>
+
+      <dependency>
+        <groupId>org.crsh</groupId>
+        <artifactId>crsh.shell.core</artifactId>
+        <classifier>standalone</classifier>
+        <version>${crash.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.sun.tools.visualvm</groupId>
+        <artifactId>core</artifactId>
+        <version>${visualvm.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.sun.tools.visualvm</groupId>
+        <artifactId>application</artifactId>
+        <version>${visualvm.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.netbeans.api</groupId>
+        <artifactId>org-openide-modules</artifactId>
+        <version>${netbeans.version}</version>
+      </dependency>
+      
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>nbm-maven-plugin</artifactId>
+          <version>${nbm.plugin.version}</version>
+          <extensions>true</extensions>
+          <configuration>
+            <author>Alain Defrance</author>
+            <licenseName>GNU General Public License, version 2</licenseName>
+            <licenseFile>license.txt</licenseFile>
+            <finalName>crash-visualvm-plugin-${project.version}</finalName>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${jar.plugin.version}</version>
+          <configuration>
+            <useDefaultManifestFile>true</useDefaultManifestFile>
+            <finalName>crash-visualvm-plugin-${project.version}</finalName>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+    
+</project>
