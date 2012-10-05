@@ -7,10 +7,10 @@
   <parent>
     <artifactId>crash-visualvm</artifactId>
     <groupId>crash-visualvm</groupId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0-alpha1-SNAPSHOT</version>
   </parent>
   <artifactId>plugin</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0-alpha1-SNAPSHOT</version>
   <packaging>nbm</packaging>
   <name>Crash VisualVM Plugin - NB Module</name>
   
@@ -32,7 +32,12 @@
       <groupId>org.netbeans.api</groupId>
       <artifactId>org-openide-modules</artifactId>
       <scope>provided</scope>
-      </dependency>
+    </dependency>
+    <dependency>
+      <groupId>com.googlecode.lanterna</groupId>
+      <artifactId>lanterna</artifactId>
+      <version>2.2.0-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -44,6 +49,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
       </plugin>
     </plugins>
 
