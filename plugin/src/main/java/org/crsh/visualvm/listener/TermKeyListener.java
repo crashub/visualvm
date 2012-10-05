@@ -158,7 +158,12 @@ public class TermKeyListener implements KeyListener {
                   candidates.add(item);
 
                 }
-                candidates.show(input, (int) caretPosition.getX(), (int) caretPosition.getY());
+
+                if (caretPosition == null) {
+                  candidates.show(input, 0, 0);
+                } else {
+                  candidates.show(input, (int) caretPosition.getX(), (int) caretPosition.getY());
+                }
                 MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{candidates, (JMenuItem) candidates.getComponent(0)});
               }
             }
