@@ -3,6 +3,7 @@ package org.crsh.visualvm.context;
 import org.crsh.shell.ShellProcessContext;
 import org.crsh.shell.ShellResponse;
 import org.crsh.text.Chunk;
+import org.crsh.text.Style;
 import org.crsh.text.Text;
 import org.crsh.visualvm.CrashView;
 
@@ -17,6 +18,8 @@ public class ExecuteProcessContext implements ShellProcessContext {
   private final CrashView view;
   private final JScrollPane scrollPane;
   private final int width;
+  
+  private Style style;
 
   public ExecuteProcessContext(int width, CrashView view, JScrollPane scrollPane) {
 
@@ -47,12 +50,16 @@ public class ExecuteProcessContext implements ShellProcessContext {
   }
 
   public void write(Chunk chunk) throws NullPointerException, IOException {
+
     if (chunk instanceof Text) {
       CharSequence seq = ((Text) chunk).getText();
       if (seq.length() > 0) {
-        view.append(seq.toString());
+        view.append(seq.toString(), style);
         scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
       }
+    } else if (chunk instanceof Style) {
+      style = (Style) chunk;
+      
     }
   }
 

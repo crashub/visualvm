@@ -6,6 +6,7 @@ import com.sun.tools.visualvm.core.ui.DataSourceView;
 import com.sun.tools.visualvm.core.ui.components.DataViewComponent;
 import org.crsh.shell.Shell;
 import org.crsh.shell.impl.remoting.RemoteServer;
+import org.crsh.text.Style;
 import org.crsh.visualvm.listener.CompletionActionListener;
 import org.crsh.visualvm.listener.InitFocusListener;
 import org.crsh.visualvm.listener.TermKeyListener;
@@ -15,11 +16,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
+import javax.swing.text.*;
 import java.awt.*;
+import java.awt.Color;
 import java.awt.event.*;
 import java.io.IOException;
 import java.util.Properties;
@@ -54,6 +53,9 @@ public class CrashView extends DataSourceView {
   private final MouseListener transferFocusListener;
   private final KeyListener termKeyListener;
   private final AncestorListener initFocusListener;
+
+  //
+  AttributeBuilder builder;
 
   public CrashView(Application application) {
     super(
@@ -119,12 +121,25 @@ public class CrashView extends DataSourceView {
     this.bottomPane.add(this.promptLabel, BorderLayout.WEST);
     this.bottomPane.add(input, BorderLayout.CENTER);
 
+    this.builder = new AttributeBuilder();
+
   }
 
   public void append(String content) {
+    append(content, null);
+  }
+
+  public void append(String content, Style style) {
+
+    MutableAttributeSet attributes = null;
+    if (style == null) {
+      attributes = new SimpleAttributeSet();
+    } else {
+      attributes = builder.build(style);
+    }
     
     try {
-      doc.insertString(doc.getLength(), content, new SimpleAttributeSet());
+      doc.insertString(doc.getLength(), content, attributes);
       scrollPane.validate();
       scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
     } catch (BadLocationException ignore) {}
