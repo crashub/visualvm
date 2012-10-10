@@ -9,6 +9,8 @@ import org.crsh.visualvm.CrashView;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
@@ -16,24 +18,22 @@ import java.io.IOException;
 public class ExecuteProcessContext implements ShellProcessContext {
 
   private final CrashView view;
-  private final JScrollPane scrollPane;
   private final int width;
+  private final List<ResultOuput> buffer;
   
   private Style style;
 
-  public ExecuteProcessContext(int width, CrashView view, JScrollPane scrollPane) {
+  public ExecuteProcessContext(CrashView view) {
 
     if (view == null) {
       throw new NullPointerException();
     }
 
-    if (scrollPane == null) {
-      throw new NullPointerException();
-    }
-
-    this.width = width;
     this.view = view;
-    this.scrollPane = scrollPane;
+    this.width = view.getWidth();
+    this.buffer = new ArrayList<ResultOuput>();
+    
+    this.view.setWaiting(true);
 
   }
 
@@ -51,11 +51,14 @@ public class ExecuteProcessContext implements ShellProcessContext {
 
   public void write(Chunk chunk) throws NullPointerException, IOException {
 
+    if (view.isWaiting()) {
+      view.setWaiting(false);
+    }
+
     if (chunk instanceof Text) {
       CharSequence seq = ((Text) chunk).getText();
       if (seq.length() > 0) {
-        view.append(seq.toString(), style);
-        scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
+        buffer.add(new ResultOuput(seq.toString(), style));
       }
     } else if (chunk instanceof Style) {
       style = (Style) chunk;
@@ -63,7 +66,26 @@ public class ExecuteProcessContext implements ShellProcessContext {
     }
   }
 
-  public void flush() {}
-  public void end(ShellResponse response) {}
+  public void flush() {
+    for (ResultOuput output : buffer) {
+      view.append(output.value, output.style);
+    }
+  }
+
+  public void end(ShellResponse response) {
+    view.setWaiting(false);
+  }
+
+  class ResultOuput {
+
+    private final String value;
+    private final Style style;
+
+    ResultOuput(String value, Style style) {
+      this.value = value;
+      this.style = style;
+    }
+
+  }
 
 }

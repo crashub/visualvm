@@ -11,10 +11,10 @@ import org.crsh.visualvm.listener.CompletionActionListener;
 import org.crsh.visualvm.listener.InitFocusListener;
 import org.crsh.visualvm.listener.TermKeyListener;
 import org.crsh.visualvm.listener.TransferFocusListener;
+import org.crsh.visualvm.ui.WaitingPanel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.text.*;
 import java.awt.*;
@@ -33,7 +33,7 @@ public class CrashView extends DataSourceView {
   private final RemoteServer server;
 
   //
-  private final JPanel pane;
+  private final WaitingPanel pane;
   private final JPanel bottomPane;
   private final JTextPane editor;
   private final StyledDocument doc;
@@ -73,7 +73,7 @@ public class CrashView extends DataSourceView {
     this.promptLabel = new JLabel(prompt);
 
     //
-    this.pane = new JPanel();
+    this.pane = new WaitingPanel();
     this.bottomPane = new JPanel();
     this.editor = new JTextPane();
     this.doc = editor.getStyledDocument();
@@ -86,7 +86,7 @@ public class CrashView extends DataSourceView {
     //
     this.completionListener = new CompletionActionListener(candidates, input);
     this.transferFocusListener = new TransferFocusListener(input);
-    this.termKeyListener = new TermKeyListener(this, shell, prompt, input, candidates, scrollPane, completionListener);
+    this.termKeyListener = new TermKeyListener(this, shell, prompt, input, candidates, completionListener);
     this.initFocusListener = new InitFocusListener(input);
 
     //
@@ -140,8 +140,8 @@ public class CrashView extends DataSourceView {
     
     try {
       doc.insertString(doc.getLength(), content, attributes);
-      scrollPane.validate();
       scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
+      scrollPane.validate();
     } catch (BadLocationException ignore) {}
 
   }
@@ -151,6 +151,14 @@ public class CrashView extends DataSourceView {
     int charWidth = metrics.charWidth('a');
     int charNumber = editor.getWidth() / charWidth;
     return charNumber - 5; // 5 handle the margin.
+  }
+
+  public void setWaiting(boolean b) {
+    this.pane.setWaiting(b);
+  }
+
+  public boolean isWaiting() {
+    return this.pane.isWaiting();
   }
 
   @Override

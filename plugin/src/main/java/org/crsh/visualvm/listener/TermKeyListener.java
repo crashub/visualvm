@@ -28,7 +28,6 @@ public class TermKeyListener implements KeyListener {
   private final String prompt;
   private final JTextArea input;
   private final JPopupMenu candidates;
-  private final JScrollPane scrollPane;
   private final ActionListener completionListener;
 
   private final List<String> history;
@@ -40,7 +39,6 @@ public class TermKeyListener implements KeyListener {
       String prompt,
       JTextArea input,
       JPopupMenu candidates,
-      JScrollPane scrollPane,
       ActionListener completionListener) {
 
     if (view == null) {
@@ -63,10 +61,6 @@ public class TermKeyListener implements KeyListener {
       throw new NullPointerException();
     }
 
-    if (scrollPane == null) {
-      throw new NullPointerException();
-    }
-
     if (completionListener == null) {
       throw new NullPointerException();
     }
@@ -76,7 +70,6 @@ public class TermKeyListener implements KeyListener {
     this.prompt = prompt;
     this.input = input;
     this.candidates = candidates;
-    this.scrollPane = scrollPane;
     this.completionListener = completionListener;
     this.history = new ArrayList<String>();
 
@@ -93,12 +86,16 @@ public class TermKeyListener implements KeyListener {
         history.add(value);
         historyPos = history.size();
         input.setText("");
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
+
+        //
+        new SwingWorker<Void, Void>() {
+          @Override
+          protected Void doInBackground() throws Exception {
             ShellProcess process = shell.createProcess(value);
-            process.execute(new ExecuteProcessContext(view.getWidth(), view, scrollPane));
+            process.execute(new ExecuteProcessContext(view));
+            return null;
           }
-        });
+        }.execute();
 
         break;
 
