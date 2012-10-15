@@ -1,5 +1,6 @@
 package org.crsh.visualvm.context;
 
+import org.crsh.shell.ShellProcess;
 import org.crsh.shell.ShellProcessContext;
 import org.crsh.shell.ShellResponse;
 import org.crsh.text.Chunk;
@@ -7,7 +8,6 @@ import org.crsh.text.Style;
 import org.crsh.text.Text;
 import org.crsh.visualvm.CrashView;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +20,12 @@ public class ExecuteProcessContext implements ShellProcessContext {
   private final CrashView view;
   private final int width;
   private final List<ResultOuput> buffer;
-  
+  private boolean canceled;
+  private final ShellProcess process;
+
   private Style style;
 
-  public ExecuteProcessContext(CrashView view) {
+  public ExecuteProcessContext(CrashView view, ShellProcess process) {
 
     if (view == null) {
       throw new NullPointerException();
@@ -32,6 +34,8 @@ public class ExecuteProcessContext implements ShellProcessContext {
     this.view = view;
     this.width = view.getWidth();
     this.buffer = new ArrayList<ResultOuput>();
+    this.canceled = false;
+    this.process = process;
     
     this.view.setWaiting(true);
 
@@ -67,13 +71,20 @@ public class ExecuteProcessContext implements ShellProcessContext {
   }
 
   public void flush() {
-    for (ResultOuput output : buffer) {
-      view.append(output.value, output.style);
+    if (!canceled) {
+      for (ResultOuput output : buffer) {
+        view.append(output.value, output.style);
+      }
     }
   }
 
   public void end(ShellResponse response) {
     view.setWaiting(false);
+  }
+
+  public void cancel() {
+    process.cancel();
+    canceled = true;
   }
 
   class ResultOuput {

@@ -5,12 +5,11 @@ import com.sun.tools.visualvm.application.Application;
 import com.sun.tools.visualvm.core.ui.DataSourceView;
 import com.sun.tools.visualvm.core.ui.components.DataViewComponent;
 import org.crsh.shell.Shell;
+import org.crsh.shell.ShellProcess;
 import org.crsh.shell.impl.remoting.RemoteServer;
 import org.crsh.text.Style;
-import org.crsh.visualvm.listener.CompletionActionListener;
-import org.crsh.visualvm.listener.InitFocusListener;
-import org.crsh.visualvm.listener.TermKeyListener;
-import org.crsh.visualvm.listener.TransferFocusListener;
+import org.crsh.visualvm.context.ExecuteProcessContext;
+import org.crsh.visualvm.listener.*;
 import org.crsh.visualvm.ui.WaitingPanel;
 
 import javax.swing.*;
@@ -51,11 +50,13 @@ public class CrashView extends DataSourceView {
   //
   private final ActionListener completionListener;
   private final MouseListener transferFocusListener;
+  private final MouseListener cancelListener;
   private final KeyListener termKeyListener;
   private final AncestorListener initFocusListener;
 
   //
   AttributeBuilder builder;
+  private ExecuteProcessContext processCtx;
 
   public CrashView(Application application) {
     super(
@@ -86,6 +87,7 @@ public class CrashView extends DataSourceView {
     //
     this.completionListener = new CompletionActionListener(candidates, input);
     this.transferFocusListener = new TransferFocusListener(input);
+    this.cancelListener = new CancelListener(this);
     this.termKeyListener = new TermKeyListener(this, shell, prompt, input, candidates, completionListener);
     this.initFocusListener = new InitFocusListener(input);
 
@@ -97,6 +99,7 @@ public class CrashView extends DataSourceView {
     this.editor.setText(shell.getWelcome());
     this.editor.setEditable(false);
     this.editor.addMouseListener(transferFocusListener);
+    this.editor.addMouseListener(cancelListener);
 
     this.scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
@@ -154,11 +157,33 @@ public class CrashView extends DataSourceView {
   }
 
   public void setWaiting(boolean b) {
+
     this.pane.setWaiting(b);
+
+    if (b) {
+      editor.setFocusable(false);
+      editor.removeMouseListener(transferFocusListener);
+    } else {
+      editor.setFocusable(true);
+      editor.addMouseListener(transferFocusListener);
+    }
+
   }
 
   public boolean isWaiting() {
     return this.pane.isWaiting();
+  }
+
+  public void cancelWaiting() {
+    if (this.pane.cancelWaiting()) {
+      processCtx.cancel();
+      editor.setFocusable(true);
+      editor.addMouseListener(transferFocusListener);
+    }
+  }
+
+  public void setProcessContext(ExecuteProcessContext processCtx) {
+    this.processCtx = processCtx;
   }
 
   @Override

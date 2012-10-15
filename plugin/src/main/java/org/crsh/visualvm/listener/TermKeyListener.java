@@ -92,7 +92,9 @@ public class TermKeyListener implements KeyListener {
           @Override
           protected Void doInBackground() throws Exception {
             ShellProcess process = shell.createProcess(value);
-            process.execute(new ExecuteProcessContext(view));
+            ExecuteProcessContext ctx = new ExecuteProcessContext(view, process);
+            view.setProcessContext(ctx);
+            process.execute(ctx);
             return null;
           }
         }.execute();

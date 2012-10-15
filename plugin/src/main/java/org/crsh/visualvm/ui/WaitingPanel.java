@@ -21,11 +21,21 @@ public class WaitingPanel extends JPanel {
     if (waiting) {
       g.setColor(new Color(0, 0, 0, 150));
       g.fillRect(0, 0, getWidth(), getHeight());
-      int xPos = (getWidth() - waitingImage.getWidth(this)) / 2;
-      int yPos = (getHeight() - waitingImage.getHeight(this)) / 2;
-      g.drawImage(waitingImage, xPos, yPos, this);
+      g.drawImage(waitingImage, xPos(), yPos(), this);
+
+      g.setColor(Color.GRAY);
+      g.drawString("Cancel", xPos() - 3, yPos() + waitingImage.getHeight(this) + 25);
+      g.drawRect(xPos() - 7, yPos() + waitingImage.getHeight(this) + 10, 50, 20);
     }
 
+  }
+
+  private int xPos() {
+    return (getWidth() - waitingImage.getWidth(this)) / 2;
+  }
+
+  private int yPos() {
+    return (getHeight() - waitingImage.getHeight(this)) / 2;
   }
 
   public void setWaiting(boolean waiting) {
@@ -36,5 +46,20 @@ public class WaitingPanel extends JPanel {
   public boolean isWaiting() {
     return waiting;
   }
-  
+
+  public boolean cancelWaiting() {
+
+    Point p = getMousePosition();
+    
+    if (waiting &&
+        p.getX() > xPos() - 7 && p.getX() < xPos() - 7 + 50 &&
+        p.getY() > yPos() + waitingImage.getHeight(this) + 10 && p.getY() < yPos() + waitingImage.getHeight(this) + 30) {
+
+      setWaiting(false);
+      return true;
+    }
+
+    return false;
+
+  }
 }
