@@ -1,6 +1,6 @@
 package org.crsh.visualvm.listener;
 
-import org.crsh.visualvm.CrashView;
+import org.crsh.visualvm.CrashSwingController;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -10,20 +10,20 @@ import java.awt.event.MouseListener;
  */
 public class CancelListener implements MouseListener {
 
-  private final CrashView view;
+  private final CrashSwingController controller;
 
-  public CancelListener(CrashView view) {
+  public CancelListener(CrashSwingController controller) {
 
-    if (view == null) {
+    if (controller == null) {
       throw new NullPointerException();
     }
 
-    this.view = view;
+    this.controller = controller;
 
   }
 
   public void mouseClicked(MouseEvent e) {
-    view.cancelWaiting();
+    controller.cancelWaiting();
   }
 
   public void mousePressed(MouseEvent e) {}

@@ -1,6 +1,7 @@
 package org.crsh.visualvm.listener;
 
-import javax.swing.*;
+import org.crsh.visualvm.CrashSwingController;
+
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -9,20 +10,20 @@ import java.awt.event.MouseListener;
  */
 public class TransferFocusListener implements MouseListener {
 
-  private final JTextArea input;
+  private final CrashSwingController controller;
 
-  public TransferFocusListener(JTextArea input) {
+  public TransferFocusListener(CrashSwingController controller) {
 
-    if (input == null) {
+    if (controller == null) {
       throw new NullPointerException();
     }
 
-    this.input = input;
+    this.controller = controller;
 
   }
 
   public void mouseClicked(MouseEvent e) {
-    input.requestFocusInWindow();
+    controller.inputFocus();
   }
 
   public void mousePressed(MouseEvent e) {}

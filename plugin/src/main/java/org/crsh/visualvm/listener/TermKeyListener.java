@@ -3,19 +3,12 @@ package org.crsh.visualvm.listener;
 import org.crsh.cmdline.CommandCompletion;
 import org.crsh.cmdline.Delimiter;
 import org.crsh.cmdline.spi.ValueCompletion;
-import org.crsh.shell.Shell;
-import org.crsh.shell.ShellProcess;
-import org.crsh.visualvm.CrashView;
-import org.crsh.visualvm.context.ExecuteProcessContext;
+import org.crsh.visualvm.CrashSwingController;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,78 +16,34 @@ import java.util.Map;
  */
 public class TermKeyListener implements KeyListener {
 
-  private final CrashView view;
-  private final Shell shell;
-  private final String prompt;
-  private final JTextArea input;
-  private final JPopupMenu candidates;
-  private final ActionListener completionListener;
+  private final CrashSwingController controller;
 
-  private final List<String> history;
-  private int historyPos = 0;
+  public TermKeyListener(CrashSwingController controller) {
 
-  public TermKeyListener(
-      CrashView view,
-      Shell shell,
-      String prompt,
-      JTextArea input,
-      JPopupMenu candidates,
-      ActionListener completionListener) {
-
-    if (view == null) {
+    if (controller == null) {
       throw new NullPointerException();
     }
 
-    if (shell == null) {
-      throw new NullPointerException();
-    }
-
-    if (prompt == null) {
-      throw new NullPointerException();
-    }
-
-    if (input == null) {
-      throw new NullPointerException();
-    }
-
-    if (candidates == null) {
-      throw new NullPointerException();
-    }
-
-    if (completionListener == null) {
-      throw new NullPointerException();
-    }
-
-    this.view = view;
-    this.shell = shell;
-    this.prompt = prompt;
-    this.input = input;
-    this.candidates = candidates;
-    this.completionListener = completionListener;
-    this.history = new ArrayList<String>();
+    this.controller = controller;
 
   }
 
   public void keyPressed(KeyEvent e) {
 
-    final String value = input.getText();
+    final String value = controller.inputRead();
 
     switch (e.getKeyCode()) {
       case KeyEvent.VK_ENTER:
         e.consume();
-        view.append("\n\n" + prompt + value + "\n\n");
-        history.add(value);
-        historyPos = history.size();
-        input.setText("");
+        controller.appendTypedCommand(value);
+        controller.historyAdd(value);
+        controller.inputClear();
 
         //
         new SwingWorker<Void, Void>() {
           @Override
           protected Void doInBackground() throws Exception {
-            ShellProcess process = shell.createProcess(value);
-            ExecuteProcessContext ctx = new ExecuteProcessContext(view, process);
-            view.setProcessContext(ctx);
-            process.execute(ctx);
+            controller.execute(value);
             return null;
           }
         }.execute();
@@ -103,31 +52,22 @@ public class TermKeyListener implements KeyListener {
 
       case KeyEvent.VK_UP:
         e.consume();
-        if (historyPos > 0) {
-          input.setText(history.get(--historyPos));
-          input.setCaretPosition(input.getText().length());
-        }
+        controller.historyPrevious();
         break;
 
       case KeyEvent.VK_DOWN:
         e.consume();
-        if (historyPos < history.size() - 1) {
-          input.setText(history.get(++historyPos));
-          input.setCaretPosition(input.getText().length());
-        }
-        else {
-          input.setText("");
-        }
+        controller.historyNext();
         break;
 
       case KeyEvent.VK_TAB:
         e.consume();
-        final Point caretPosition = input.getCaret().getMagicCaretPosition();
+        //final Point caretPosition = controller.caretPos();
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            String prefix = value.substring(0, input.getCaretPosition());
-            CommandCompletion completion = shell.complete(prefix);
+            String prefix = controller.inputReadToCaret();
+            CommandCompletion completion = controller.complete(prefix);
             ValueCompletion vc = completion.getValue();
             if (vc.isEmpty()) {
               return;
@@ -139,10 +79,9 @@ public class TermKeyListener implements KeyListener {
                 StringBuilder sb = new StringBuilder();
                 delimiter.escape(vc.iterator().next().getKey(), sb);
                 sb.append(completion.getDelimiter().getValue());
-                input.insert(sb.toString(), input.getCaretPosition());
-                input.requestFocus();
+                controller.insertCompletion(sb.toString());
               } else {
-                candidates.removeAll();
+                controller.candidatesClear();
                 for (Map.Entry<String, Boolean> entry : vc) {
                   StringBuilder sb = new StringBuilder();
                   sb.append(vc.getPrefix());
@@ -150,20 +89,16 @@ public class TermKeyListener implements KeyListener {
                   if (entry.getValue()) {
                     sb.append(completion.getDelimiter().getValue());
                   }
-                  int start = input.getText().length() - (input.getCaretPosition() - vc.getPrefix().length());
+                  int start = value.length() - (controller.caretPosition() - vc.getPrefix().length());
                   JMenuItem item = new JMenuItem(sb.toString().substring(start));
                   item.setSelected(true);
-                  item.addActionListener(completionListener);
-                  candidates.add(item);
+                  item.addActionListener(new CompletionActionListener(controller));
+                  controller.candidatesAdd(item);
 
                 }
 
-                if (caretPosition == null) {
-                  candidates.show(input, 0, 0);
-                } else {
-                  candidates.show(input, (int) caretPosition.getX(), (int) caretPosition.getY());
-                }
-                MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{candidates, (JMenuItem) candidates.getComponent(0)});
+                controller.candidatesShow();
+                
               }
             }
             catch (IOException ignore) {}

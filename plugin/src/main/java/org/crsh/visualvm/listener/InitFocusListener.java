@@ -1,6 +1,7 @@
 package org.crsh.visualvm.listener;
 
-import javax.swing.*;
+import org.crsh.visualvm.CrashSwingController;
+
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 
@@ -9,21 +10,22 @@ import javax.swing.event.AncestorListener;
  */
 public class InitFocusListener implements AncestorListener {
 
-  private final JTextArea input;
+  private final CrashSwingController controller;
 
-  public InitFocusListener(JTextArea input) {
+  public InitFocusListener(CrashSwingController controller) {
 
-    if (input == null) {
+    if (controller == null) {
       throw new NullPointerException();
     }
 
-    this.input = input;
+    this.controller = controller;
 
   }
 
   public void ancestorAdded(AncestorEvent event) {
-    input.requestFocusInWindow();
+    controller.inputFocus();
   }
+
   public void ancestorRemoved(AncestorEvent event) {}
   public void ancestorMoved(AncestorEvent event) {}
 }

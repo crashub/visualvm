@@ -1,5 +1,7 @@
 package org.crsh.visualvm.listener;
 
+import org.crsh.visualvm.CrashSwingController;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,28 +11,21 @@ import java.awt.event.ActionListener;
  */
 public class CompletionActionListener implements ActionListener {
 
-  private final JTextArea input;
-  private final JPopupMenu candidates;
+  private final CrashSwingController controller;
 
-  public CompletionActionListener(JPopupMenu candidates, JTextArea input) {
+  public CompletionActionListener(CrashSwingController controller) {
 
-    if (candidates == null) {
+    if (controller == null) {
       throw new NullPointerException();
     }
 
-    if (input == null) {
-      throw new NullPointerException();
-    }
-
-    this.candidates = candidates;
-    this.input = input;
+    this.controller = controller;
 
   }
 
   public void actionPerformed(ActionEvent e) {
     String value = ((JMenuItem) e.getSource()).getText();
-    input.insert(value, input.getCaretPosition());
-    candidates.removeAll();
+    controller.insertCompletion(value);
   }
   
 }

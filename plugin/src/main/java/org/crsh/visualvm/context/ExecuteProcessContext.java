@@ -1,12 +1,11 @@
 package org.crsh.visualvm.context;
 
-import org.crsh.shell.ShellProcess;
 import org.crsh.shell.ShellProcessContext;
 import org.crsh.shell.ShellResponse;
 import org.crsh.text.Chunk;
 import org.crsh.text.Style;
 import org.crsh.text.Text;
-import org.crsh.visualvm.CrashView;
+import org.crsh.visualvm.CrashSwingController;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,32 +16,26 @@ import java.util.List;
  */
 public class ExecuteProcessContext implements ShellProcessContext {
 
-  private final CrashView view;
-  private final int width;
+  private final CrashSwingController controller;
+
   private final List<ResultOuput> buffer;
   private boolean canceled;
-  private final ShellProcess process;
 
   private Style style;
 
-  public ExecuteProcessContext(CrashView view, ShellProcess process) {
+  public ExecuteProcessContext(CrashSwingController controller) {
 
-    if (view == null) {
+    if (controller == null) {
       throw new NullPointerException();
     }
 
-    this.view = view;
-    this.width = view.getWidth();
+    this.controller = controller;
     this.buffer = new ArrayList<ResultOuput>();
-    this.canceled = false;
-    this.process = process;
-    
-    this.view.setWaiting(true);
 
   }
 
   public int getWidth() {
-    return width;
+    return controller.getWidth();
   }
 
   public String getProperty(String name) {
@@ -55,8 +48,8 @@ public class ExecuteProcessContext implements ShellProcessContext {
 
   public void write(Chunk chunk) throws NullPointerException, IOException {
 
-    if (view.isWaiting()) {
-      view.setWaiting(false);
+    if (controller.isWaiting()) {
+      controller.setWaiting(false);
     }
 
     if (chunk instanceof Text) {
@@ -73,17 +66,16 @@ public class ExecuteProcessContext implements ShellProcessContext {
   public void flush() {
     if (!canceled) {
       for (ResultOuput output : buffer) {
-        view.append(output.value, output.style);
+        controller.append(output.value, output.style);
       }
     }
   }
 
   public void end(ShellResponse response) {
-    view.setWaiting(false);
+    controller.setWaiting(false);
   }
 
   public void cancel() {
-    process.cancel();
     canceled = true;
   }
 
