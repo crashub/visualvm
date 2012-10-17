@@ -1,5 +1,7 @@
 package org.crsh.visualvm.ui;
 
+import org.crsh.visualvm.CrashSwingController;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -10,7 +12,7 @@ public class WaitingPanel extends JPanel {
 
   public boolean waiting = false;
   private Image waitingImage = this.getToolkit().createImage(Thread.currentThread().getContextClassLoader().getResource("org/crsh/image/waiting.gif"));
-  
+
   @Override
   public void paint(final Graphics g) {
 
@@ -19,11 +21,11 @@ public class WaitingPanel extends JPanel {
 
     //
     if (waiting) {
-      g.setColor(new Color(0, 0, 0, 150));
+      g.setColor(new Color(getBackground().getRed(), getBackground().getGreen(), getBackground().getBlue(), 150));
       g.fillRect(0, 0, getWidth(), getHeight());
       g.drawImage(waitingImage, xPos(), yPos(), this);
 
-      g.setColor(Color.GRAY);
+      g.setColor(getForeground());
       g.drawString("Cancel", xPos() - 3, yPos() + waitingImage.getHeight(this) + 25);
       g.drawRect(xPos() - 7, yPos() + waitingImage.getHeight(this) + 10, 50, 20);
     }
@@ -62,4 +64,5 @@ public class WaitingPanel extends JPanel {
     return false;
 
   }
+  
 }

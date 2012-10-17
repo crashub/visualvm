@@ -1,16 +1,19 @@
 package org.crsh.visualvm;
 
+import com.sun.tools.visualvm.core.datasource.Storage;
 import org.crsh.cmdline.CommandCompletion;
 import org.crsh.shell.Shell;
 import org.crsh.shell.ShellProcess;
 import org.crsh.text.Decoration;
 import org.crsh.text.Style;
 import org.crsh.visualvm.context.ExecuteProcessContext;
+import org.crsh.visualvm.ui.ColorIcon;
 import org.crsh.visualvm.ui.WaitingPanel;
 
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,8 +26,14 @@ public class CrashSwingController {
   private final JTextPane editor;
   private final StyledDocument doc;
   private final JScrollPane scrollPane;
+  private final JLabel promptLabel;
   private final JTextArea input;
   private final JPopupMenu candidates;
+  private final JPanel bottomPane;
+
+  private final JLabel homeLabel;
+  private final JButton bgButton;
+  private final JButton fgButton;
 
   private final Shell shell;
   private final String prompt;
@@ -33,18 +42,92 @@ public class CrashSwingController {
   private int historyPos = 0;
   private ExecuteProcessContext currentCtx;
 
-  public CrashSwingController(Shell shell, WaitingPanel pane, JTextPane editor, JTextArea input, JPopupMenu candidates, JScrollPane scrollPane) {
+  private Color backgroundColor;
+  private Color foregroundColor;
+
+  private String crashHome;
+  private final Storage storage;
+  private final File data;
+
+  public CrashSwingController(Shell shell, WaitingPanel pane, JTextPane editor, JLabel promptLabel, JTextArea input, JPopupMenu candidates, JScrollPane scrollPane, JPanel bottomPane, JLabel homeLabel, JButton bgButton, JButton fgButton) {
     this.shell = shell;
     this.pane = pane;
     this.editor = editor;
     this.doc = editor.getStyledDocument();
     this.candidates = candidates;
     this.scrollPane = scrollPane;
+    this.promptLabel = promptLabel;
     this.input = input;
+    this.bottomPane = bottomPane;
+
+    this.homeLabel = homeLabel;
+    this.bgButton = bgButton;
+    this.fgButton = fgButton;
 
     this.prompt = shell.getPrompt();
     this.history = new ArrayList<String>();
+    
+    this.data = new File(Storage.getPersistentStorageDirectory(), "crash");
+    this.storage = new Storage(Storage.getPersistentStorageDirectory(), "crash");
 
+    setCrashHome(readData("crash.home", System.getProperty("user.home") + "/crash"));
+    setBackgroundColor(new Color(Integer.valueOf(readData("crash.bg", String.valueOf(Color.BLACK.getRGB())))), false);
+    setForegroundColor(new Color(Integer.valueOf(readData("crash.fg", String.valueOf(Color.GRAY.getRGB())))), false);
+
+  }
+
+  public void setBackgroundColor(Color color, boolean persist) {
+    this.backgroundColor = color;
+    if (persist) writeData("crash.bg",  String.valueOf(color.getRGB()));
+
+    editor.setBackground(color);
+    input.setBackground(color);
+    promptLabel.setBackground(color);
+    bottomPane.setBackground(color);
+    pane.setBackground(color);
+    ((ColorIcon) bgButton.getIcon()).setColor(color);
+  }
+
+  public void setBackgroundColor(Color color) {
+    setBackgroundColor(color, true);
+  }
+
+  public void setForegroundColor(Color color, boolean persist) {
+    this.foregroundColor = color;
+    if (persist) writeData("crash.fg",  String.valueOf(color.getRGB()));
+
+    editor.setForeground(color);
+    input.setForeground(color);
+    input.setCaretColor(color);
+    promptLabel.setForeground(color);
+    pane.setForeground(color);
+    ((ColorIcon) fgButton.getIcon()).setColor(color);
+  }
+
+  public void setForegroundColor(Color color) {
+    setForegroundColor(color, true);
+  }
+
+  public Color getBackgroundColor() {
+    return backgroundColor;
+  }
+
+  public Color getForegroundColor() {
+    return foregroundColor;
+  }
+
+  public String getCrashHome() {
+    return crashHome;
+  }
+
+  public void setCrashHome(String crashHome, boolean persist) {
+    this.crashHome = crashHome;
+    this.homeLabel.setText("Crash home : " + crashHome);
+    if (persist) writeData("crash.home",  crashHome);
+  }
+
+  public void setCrashHome(String crashHome) {
+    setCrashHome(crashHome, true);
   }
 
   public void insertCompletion(String value) {
@@ -156,6 +239,23 @@ public class CrashSwingController {
 
   public void appendTypedCommand(String content) {
     append("\n\n" + prompt + content + "\n\n", null);
+  }
+
+  public String readData(String key, String defaultValue) {
+
+    String value = storage.getCustomProperty(key);
+    if (value != null) {
+      return value;
+    } else {
+      writeData(key, defaultValue);
+      return defaultValue;
+    }
+
+  }
+
+  public void writeData(String key, String value) {
+    storage.setCustomProperty(key, value);
+    storage.saveCustomPropertiesTo(data);
   }
 
   public void append(String content, Style style) {

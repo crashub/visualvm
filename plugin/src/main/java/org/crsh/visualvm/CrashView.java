@@ -2,17 +2,21 @@ package org.crsh.visualvm;
 
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.visualvm.application.Application;
+import com.sun.tools.visualvm.core.datasource.Storage;
 import com.sun.tools.visualvm.core.ui.DataSourceView;
 import com.sun.tools.visualvm.core.ui.components.DataViewComponent;
 import org.crsh.shell.Shell;
 import org.crsh.shell.impl.remoting.RemoteServer;
 import org.crsh.visualvm.listener.*;
+import org.crsh.visualvm.ui.ColorIcon;
 import org.crsh.visualvm.ui.WaitingPanel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -52,8 +56,6 @@ public class CrashView extends DataSourceView {
     JTextPane editor = new JTextPane();
     editor.setBorder(border);
     editor.setFont(font);
-    editor.setBackground(Color.BLACK);
-    editor.setForeground(Color.GRAY);
     editor.setText(shell.getWelcome());
     editor.setEditable(false);
 
@@ -63,32 +65,45 @@ public class CrashView extends DataSourceView {
     JTextArea input = new JTextArea();
     input.setBorder(border);
     input.setFont(font);
-    input.setBackground(Color.BLACK);
-    input.setForeground(Color.GRAY);
-    input.setCaretColor(Color.GRAY);
 
     JLabel promptLabel = new JLabel(shell.getPrompt());
-    promptLabel.setBackground(Color.BLACK);
-    promptLabel.setForeground(Color.GRAY);
     promptLabel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
 
     JPanel bottomPane = new JPanel();
-    bottomPane.setBackground(Color.BLACK);
     bottomPane.setLayout(new BorderLayout());
     bottomPane.add(promptLabel, BorderLayout.WEST);
     bottomPane.add(input, BorderLayout.CENTER);
 
     WaitingPanel pane = new WaitingPanel();
-    pane.setBackground(Color.BLACK);
     pane.setLayout(new BorderLayout());
     pane.add(scrollPane, BorderLayout.CENTER);
     pane.add(bottomPane, BorderLayout.SOUTH);
 
-    CrashSwingController controller = new CrashSwingController(shell, pane, editor, input, candidates, scrollPane);
+    JPanel configPanel = new JPanel();
+    configPanel.setBackground(Color.WHITE);
+
+    JLabel crashHomeLabel = new JLabel();
+    configPanel.add(crashHomeLabel);
+
+    JButton browse = new JButton("Browse");
+    configPanel.add(browse);
+
+    JButton bgColor = new JButton("Background", new ColorIcon(null));
+    configPanel.add(bgColor);
+
+    JButton fgColor = new JButton("Foreground", new ColorIcon(null));
+    configPanel.add(fgColor);
+
+    pane.add(configPanel, BorderLayout.NORTH);
+
+    CrashSwingController controller = new CrashSwingController(shell, pane, editor, promptLabel, input, candidates, scrollPane, bottomPane, crashHomeLabel, bgColor, fgColor);
 
     input.addKeyListener(new TermKeyListener(controller));
     editor.addMouseListener(new TransferFocusListener(controller));
     editor.addMouseListener(new CancelListener(controller));
+    bgColor.addActionListener(new ColorChangeListener(controller, ColorChangeListener.Type.BACKGROUND));
+    fgColor.addActionListener(new ColorChangeListener(controller, ColorChangeListener.Type.FOREGROUND));
+    browse.addActionListener(new PathChangeListener(controller));
 
     return controller;
 
