@@ -1,42 +1,56 @@
 package org.crsh.visualvm;
 
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.visualvm.application.Application;
 import com.sun.tools.visualvm.core.datasource.Storage;
 import org.crsh.cmdline.CommandCompletion;
 import org.crsh.shell.Shell;
 import org.crsh.shell.ShellProcess;
+import org.crsh.shell.impl.remoting.RemoteServer;
 import org.crsh.text.Decoration;
 import org.crsh.text.Style;
 import org.crsh.visualvm.context.ExecuteProcessContext;
+import org.crsh.visualvm.listener.*;
 import org.crsh.visualvm.ui.ColorIcon;
 import org.crsh.visualvm.ui.WaitingPanel;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.text.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
  */
 public class CrashSwingController {
 
-  private final WaitingPanel pane;
-  private final JTextPane editor;
-  private final StyledDocument doc;
-  private final JScrollPane scrollPane;
-  private final JLabel promptLabel;
-  private final JTextArea input;
-  private final JPopupMenu candidates;
-  private final JPanel bottomPane;
+  private final Application application;
 
-  private final JLabel homeLabel;
-  private final JButton bgButton;
-  private final JButton fgButton;
+  private WaitingPanel pane;
+  private JPanel configPanel;
+  private JTextPane editor;
+  private StyledDocument doc;
+  private JScrollPane scrollPane;
+  private JLabel promptLabel;
+  private JTextArea input;
+  private JPopupMenu candidates;
+  private JPanel bottomPane;
 
-  private final Shell shell;
-  private final String prompt;
+  private JLabel homeLabel;
+  private JButton bgButton;
+  private JButton fgButton;
+  private JButton deploy;
+  private JButton undeploy;
+  private JLabel crashHomeLabel;
+  private JButton browse;
+
+  private Shell shell;
+  private String prompt;
 
   private final List<String> history;
   private int historyPos = 0;
@@ -48,31 +62,198 @@ public class CrashSwingController {
   private String crashHome;
   private final Storage storage;
   private final File data;
+  private RemoteServer server;
 
-  public CrashSwingController(Shell shell, WaitingPanel pane, JTextPane editor, JLabel promptLabel, JTextArea input, JPopupMenu candidates, JScrollPane scrollPane, JPanel bottomPane, JLabel homeLabel, JButton bgButton, JButton fgButton) {
-    this.shell = shell;
-    this.pane = pane;
-    this.editor = editor;
-    this.doc = editor.getStyledDocument();
-    this.candidates = candidates;
-    this.scrollPane = scrollPane;
-    this.promptLabel = promptLabel;
-    this.input = input;
-    this.bottomPane = bottomPane;
-
-    this.homeLabel = homeLabel;
-    this.bgButton = bgButton;
-    this.fgButton = fgButton;
-
-    this.prompt = shell.getPrompt();
+  public CrashSwingController(Application application) {
+    this.application = application;
     this.history = new ArrayList<String>();
-    
     this.data = new File(Storage.getPersistentStorageDirectory(), "crash");
     this.storage = new Storage(Storage.getPersistentStorageDirectory(), "crash");
+  }
+
+  public void initUI() {
+
+    //
+    candidates = new JPopupMenu();
+    Font font = new Font("Monospaced", Font.PLAIN, 14);
+    Border border = BorderFactory.createEmptyBorder(14, 8, 14, 8);
+
+    //
+    editor = new JTextPane();
+    editor.setBorder(border);
+    editor.setFont(font);
+    editor.setEditable(false);
+
+    //
+    scrollPane = new JScrollPane(editor);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder());
+
+    //
+    input = new JTextArea();
+    input.setBorder(border);
+    input.setFont(font);
+
+    //
+    promptLabel = new JLabel("");
+    promptLabel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+
+    //
+    bottomPane = new JPanel();
+    bottomPane.setLayout(new BorderLayout());
+    bottomPane.add(promptLabel, BorderLayout.WEST);
+    bottomPane.add(input, BorderLayout.CENTER);
+
+    //
+    pane = new WaitingPanel();
+    pane.setLayout(new BorderLayout());
+
+    //
+    crashHomeLabel = new JLabel();
+    browse = new JButton("Browse");
+    deploy = new JButton("Deploy agent");
+    undeploy = new JButton("Undeploy agent");
+
+    configPanel = new JPanel();
+    configPanel.setBackground(Color.WHITE);
+
+    configPanel.add(crashHomeLabel);
+    configPanel.add(browse);
+    configPanel.add(deploy);
+
+    bgButton = new JButton("Background", new ColorIcon(null));
+    fgButton = new JButton("Foreground", new ColorIcon(null));
+
+    pane.add(configPanel, BorderLayout.NORTH);
+
+    input.addKeyListener(new TermKeyListener(this));
+    editor.addMouseListener(new TransferFocusListener(this));
+    editor.addMouseListener(new CancelListener(this));
+    bgButton.addActionListener(new ColorChangeListener(this, ColorChangeListener.Type.BACKGROUND));
+    fgButton.addActionListener(new ColorChangeListener(this, ColorChangeListener.Type.FOREGROUND));
+    browse.addActionListener(new PathChangeListener(this));
+    deploy.addActionListener(new DeployAgentListener(this));
+    undeploy.addActionListener(new UndeployAgentListener(this));
+
+    this.doc = editor.getStyledDocument();
+
+    this.homeLabel = crashHomeLabel;
 
     setCrashHome(readData("crash.home", System.getProperty("user.home") + "/crash"));
     setBackgroundColor(new Color(Integer.valueOf(readData("crash.bg", String.valueOf(Color.BLACK.getRGB())))), false);
     setForegroundColor(new Color(Integer.valueOf(readData("crash.fg", String.valueOf(Color.GRAY.getRGB())))), false);
+
+  }
+
+  public void showTerminal() {
+    pane.add(scrollPane, BorderLayout.CENTER);
+    pane.add(bottomPane, BorderLayout.SOUTH);
+    configPanel.removeAll();
+    configPanel.add(undeploy);
+    configPanel.add(bgButton);
+    configPanel.add(fgButton);
+  }
+
+  public void reinitUI() {
+    pane.remove(scrollPane);
+    pane.remove(bottomPane);
+    configPanel.removeAll();
+    configPanel.add(crashHomeLabel);
+    configPanel.add(browse);
+    configPanel.add(deploy);
+  }
+
+  public boolean deploy() {
+
+    server = new RemoteServer(0);
+    
+    try {
+
+      File cmdDir = new File(crashHome + "/cmd");
+      File confDir = new File(crashHome + "/conf");
+
+      if (!cmdDir.exists()) {
+        cmdDir.mkdirs();
+      }
+
+      if (!confDir.exists()) {
+        confDir.mkdirs();
+      }
+
+      StringBuilder options = new StringBuilder();
+
+      options.append("--cmd ");
+      options.append(cmdDir.getAbsolutePath());
+      options.append(" --conf ");
+      options.append(confDir.getAbsolutePath());
+      options.append(" ");
+      options.append(String.valueOf(listen(server)));
+
+      VirtualMachine vm = VirtualMachine.attach("" + this.application.getPid());
+      vm.loadAgent(agentPath(), options.toString());
+
+      //
+      server.accept();
+
+      //
+      this.shell = server.getShell();
+      this.prompt = shell.getPrompt();
+
+      this.editor.setText(shell.getWelcome());
+      this.promptLabel.setText(shell.getPrompt());
+      return true;
+
+    } catch (Exception e) {
+      fail(e);
+      return false;
+    }
+
+  }
+
+  public void undeploy() {
+    server.close();
+  }
+
+  private String agentPath() {
+
+    Properties properties = new Properties();
+    try {
+      properties.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/crsh/visualvm/conf.properties"));
+    } catch (IOException e) {
+      fail(e);
+    }
+
+    String home = System.getProperty("netbeans.user");
+    String separator = System.getProperty("file.separator");
+    StringBuilder sb = new StringBuilder();
+    sb.append(home);
+    sb.append(separator);
+    sb.append("modules");
+    sb.append(separator);
+    sb.append("ext");
+    sb.append(separator);
+    sb.append("org.crsh");
+    sb.append(separator);
+    sb.append("crsh.shell.core-");
+    sb.append(properties.getProperty("crash.version"));
+    sb.append("-standalone.jar");
+
+    return sb.toString();
+
+  }
+
+  private void fail(Exception e) {
+    JOptionPane.showMessageDialog(null, "Agent deployment failed.");
+    throw new RuntimeException(e);
+  }
+
+  private int listen(RemoteServer server) {
+
+    try {
+      return server.bind();
+    } catch (IOException e) {
+      fail(e);
+      return 0;
+    }
 
   }
 
