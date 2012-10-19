@@ -2,11 +2,13 @@ package org.crsh.visualvm.context;
 
 import org.crsh.shell.ShellProcessContext;
 import org.crsh.shell.ShellResponse;
+import org.crsh.text.CLS;
 import org.crsh.text.Chunk;
 import org.crsh.text.Style;
 import org.crsh.text.Text;
 import org.crsh.visualvm.CrashSwingController;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +48,25 @@ public class ExecuteProcessContext implements ShellProcessContext {
     return null;
   }
 
-  public void write(Chunk chunk) throws NullPointerException, IOException {
+  public void flush() {
+    if (!canceled) {
+      for (ResultOuput output : buffer) {
+        controller.append(output.value, output.style);
+      }
+    }
+    buffer.clear();
+  }
+
+  public void end(ShellResponse response) {
+    controller.inputEnable();
+    controller.inputFocus();
+  }
+
+  public void cancel() {
+    canceled = true;
+  }
+
+  public void provide(Chunk chunk) throws IOException {
 
     if (controller.isWaiting()) {
       controller.setWaiting(false);
@@ -59,24 +79,10 @@ public class ExecuteProcessContext implements ShellProcessContext {
       }
     } else if (chunk instanceof Style) {
       style = (Style) chunk;
-      
+    } else if (chunk instanceof CLS) {
+      controller.contentClear();
     }
-  }
 
-  public void flush() {
-    if (!canceled) {
-      for (ResultOuput output : buffer) {
-        controller.append(output.value, output.style);
-      }
-    }
-  }
-
-  public void end(ShellResponse response) {
-    controller.setWaiting(false);
-  }
-
-  public void cancel() {
-    canceled = true;
   }
 
   class ResultOuput {

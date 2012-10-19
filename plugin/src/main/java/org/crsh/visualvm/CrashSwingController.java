@@ -7,7 +7,6 @@ import org.crsh.cmdline.CommandCompletion;
 import org.crsh.shell.Shell;
 import org.crsh.shell.ShellProcess;
 import org.crsh.shell.impl.remoting.RemoteServer;
-import org.crsh.text.Decoration;
 import org.crsh.text.Style;
 import org.crsh.visualvm.context.ExecuteProcessContext;
 import org.crsh.visualvm.listener.*;
@@ -151,6 +150,8 @@ public class CrashSwingController {
     configPanel.add(undeploy);
     configPanel.add(bgButton);
     configPanel.add(fgButton);
+    configPanel.repaint();
+    inputFocus();
   }
 
   public void reinitUI() {
@@ -330,6 +331,8 @@ public class CrashSwingController {
     if (this.pane.cancelWaiting() && currentCtx != null) {
       currentCtx.cancel();
       editor.setFocusable(true);
+      inputEnable();
+      inputFocus();
     }
   }
 
@@ -337,6 +340,7 @@ public class CrashSwingController {
     ShellProcess process = shell.createProcess(cmd);
     setWaiting(true);
     currentCtx = new ExecuteProcessContext(this);
+    inputDisable();
     process.execute(currentCtx);
   }
 
@@ -375,6 +379,10 @@ public class CrashSwingController {
 
   public void inputClear() {
     input.setText("");
+  }
+
+  public void contentClear() {
+    editor.setText("");
   }
 
   public void inputFocus() {
@@ -460,6 +468,16 @@ public class CrashSwingController {
     return pane;
   }
 
+  public void inputDisable() {
+    pane.remove(bottomPane);
+  }
+
+  public void inputEnable() {
+    pane.add(bottomPane, BorderLayout.SOUTH);
+    scrollPane.repaint();
+    bottomPane.repaint();
+  }
+
   public MutableAttributeSet buildTextAttribute(Style style) {
 
     //
@@ -468,10 +486,15 @@ public class CrashSwingController {
     }
 
     //
+    if (style == Style.reset || !(style instanceof Style.Composite)) {
+      return new SimpleAttributeSet();
+    }
+
+    //
+    Style.Composite composite = (Style.Composite) style;
     MutableAttributeSet attributes = new SimpleAttributeSet();
-    Color fg = mapColor(style.getForeground());
-    Color bg = mapColor(style.getBackground());
-    Decoration decoration = style.getDecoration();
+    Color fg = mapColor(composite.getForeground());
+    Color bg = mapColor(composite.getBackground());
 
     //
     if (fg != null) {
@@ -484,18 +507,13 @@ public class CrashSwingController {
     }
 
     //
-    if (decoration != null) {
-      switch (decoration) {
-        case bold:
-          StyleConstants.setBold(attributes, true);
-          break;
-        case underline:
-          StyleConstants.setUnderline(attributes, true);
-          break;
-        case blink: // blink is not supported by swing.
-        default:
-          break;
-      }
+    if (composite.getBold() != null) {
+      StyleConstants.setBold(attributes, composite.getBold());
+    }
+
+    //
+    if (composite.getUnderline() != null) {
+      StyleConstants.setUnderline(attributes, composite.getUnderline());
     }
 
     //
