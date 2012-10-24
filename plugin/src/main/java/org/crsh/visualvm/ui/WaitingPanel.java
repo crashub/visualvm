@@ -1,7 +1,5 @@
 package org.crsh.visualvm.ui;
 
-import org.crsh.visualvm.CrashSwingController;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -24,10 +22,6 @@ public class WaitingPanel extends JPanel {
       g.setColor(new Color(getBackground().getRed(), getBackground().getGreen(), getBackground().getBlue(), 150));
       g.fillRect(0, 0, getWidth(), getHeight());
       g.drawImage(waitingImage, xPos(), yPos(), this);
-
-      g.setColor(getForeground());
-      g.drawString("Cancel", xPos() - 3, yPos() + waitingImage.getHeight(this) + 25);
-      g.drawRect(xPos() - 7, yPos() + waitingImage.getHeight(this) + 10, 50, 20);
     }
 
   }
@@ -47,22 +41,6 @@ public class WaitingPanel extends JPanel {
 
   public boolean isWaiting() {
     return waiting;
-  }
-
-  public boolean cancelWaiting() {
-
-    Point p = getMousePosition();
-    
-    if (waiting &&
-        p.getX() > xPos() - 7 && p.getX() < xPos() - 7 + 50 &&
-        p.getY() > yPos() + waitingImage.getHeight(this) + 10 && p.getY() < yPos() + waitingImage.getHeight(this) + 30) {
-
-      setWaiting(false);
-      return true;
-    }
-
-    return false;
-
   }
   
 }

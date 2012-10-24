@@ -1,5 +1,6 @@
 package org.crsh.visualvm.context;
 
+import org.crsh.shell.ShellProcess;
 import org.crsh.shell.ShellProcessContext;
 import org.crsh.shell.ShellResponse;
 import org.crsh.text.CLS;
@@ -8,9 +9,10 @@ import org.crsh.text.Style;
 import org.crsh.text.Text;
 import org.crsh.visualvm.CrashSwingController;
 
-import javax.swing.*;
+import javax.swing.text.DefaultStyledDocument;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,7 +23,7 @@ public class ExecuteProcessContext implements ShellProcessContext {
   private final CrashSwingController controller;
 
   private final List<ResultOuput> buffer;
-  private boolean canceled;
+  private boolean cleared;
 
   private Style style;
 
@@ -40,6 +42,10 @@ public class ExecuteProcessContext implements ShellProcessContext {
     return controller.getWidth();
   }
 
+  public int getHeight() {
+    return controller.getHeight();
+  }
+
   public String getProperty(String name) {
     return null;
   }
@@ -49,10 +55,11 @@ public class ExecuteProcessContext implements ShellProcessContext {
   }
 
   public void flush() {
-    if (!canceled) {
-      for (ResultOuput output : buffer) {
-        controller.append(output.value, output.style);
-      }
+    if (cleared) {
+      controller.reloadDocument(Collections.unmodifiableList(buffer), new DefaultStyledDocument());
+      cleared = false;
+    } else {
+      controller.append(Collections.unmodifiableList(buffer));
     }
     buffer.clear();
   }
@@ -60,10 +67,6 @@ public class ExecuteProcessContext implements ShellProcessContext {
   public void end(ShellResponse response) {
     controller.inputEnable();
     controller.inputFocus();
-  }
-
-  public void cancel() {
-    canceled = true;
   }
 
   public void provide(Chunk chunk) throws IOException {
@@ -80,15 +83,15 @@ public class ExecuteProcessContext implements ShellProcessContext {
     } else if (chunk instanceof Style) {
       style = (Style) chunk;
     } else if (chunk instanceof CLS) {
-      controller.contentClear();
+      cleared = true;
     }
 
   }
 
-  class ResultOuput {
+  public class ResultOuput {
 
-    private final String value;
-    private final Style style;
+    public final String value;
+    public final Style style;
 
     ResultOuput(String value, Style style) {
       this.value = value;

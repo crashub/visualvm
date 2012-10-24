@@ -32,7 +32,7 @@ public class CrashSwingController {
 
   private WaitingPanel pane;
   private JPanel configPanel;
-  private JTextPane editor;
+  public JTextPane editor;
   private StyledDocument doc;
   private JScrollPane scrollPane;
   private JLabel promptLabel;
@@ -53,7 +53,8 @@ public class CrashSwingController {
 
   private final List<String> history;
   private int historyPos = 0;
-  private ExecuteProcessContext currentCtx;
+  private ShellProcess process;
+  private ExecuteProcessContext processCtx;
 
   private Color backgroundColor;
   private Color foregroundColor;
@@ -62,12 +63,14 @@ public class CrashSwingController {
   private final Storage storage;
   private final File data;
   private RemoteServer server;
+  private StringBuilder inputBuffer;
 
   public CrashSwingController(Application application) {
     this.application = application;
     this.history = new ArrayList<String>();
     this.data = new File(Storage.getPersistentStorageDirectory(), "crash");
     this.storage = new Storage(Storage.getPersistentStorageDirectory(), "crash");
+    this.inputBuffer = new StringBuilder();
   }
 
   public void initUI() {
@@ -79,9 +82,11 @@ public class CrashSwingController {
 
     //
     editor = new JTextPane();
+    editor.setAutoscrolls(true);
     editor.setBorder(border);
     editor.setFont(font);
     editor.setEditable(false);
+    editor.setDocument(new DefaultStyledDocument());
 
     //
     scrollPane = new JScrollPane(editor);
@@ -89,6 +94,7 @@ public class CrashSwingController {
 
     //
     input = new JTextArea();
+    input.setCaretColor(getForegroundColor());
     input.setBorder(border);
     input.setFont(font);
 
@@ -125,8 +131,9 @@ public class CrashSwingController {
     pane.add(configPanel, BorderLayout.NORTH);
 
     input.addKeyListener(new TermKeyListener(this));
+    input.addKeyListener(new CtrlCListener(this));
+    input.addKeyListener(new BufferEntryListener(this));
     editor.addMouseListener(new TransferFocusListener(this));
-    editor.addMouseListener(new CancelListener(this));
     bgButton.addActionListener(new ColorChangeListener(this, ColorChangeListener.Type.BACKGROUND));
     fgButton.addActionListener(new ColorChangeListener(this, ColorChangeListener.Type.FOREGROUND));
     browse.addActionListener(new PathChangeListener(this));
@@ -161,6 +168,14 @@ public class CrashSwingController {
     configPanel.add(crashHomeLabel);
     configPanel.add(browse);
     configPanel.add(deploy);
+  }
+
+  public void bufferClear() {
+    inputBuffer = new StringBuilder();
+  }
+
+  public void bufferAppend(String value) {
+    inputBuffer.append(value);
   }
 
   public boolean deploy() {
@@ -263,6 +278,7 @@ public class CrashSwingController {
     if (persist) writeData("crash.bg",  String.valueOf(color.getRGB()));
 
     editor.setBackground(color);
+    editor.setCaretColor(color);
     input.setBackground(color);
     promptLabel.setBackground(color);
     bottomPane.setBackground(color);
@@ -327,21 +343,23 @@ public class CrashSwingController {
     editor.setFocusable(!b);
   }
 
-  public void cancelWaiting() {
-    if (this.pane.cancelWaiting() && currentCtx != null) {
-      currentCtx.cancel();
+  public void cancelProcess() {
+    if (process != null && processCtx != null) {
+      process.cancel();
       editor.setFocusable(true);
+      pane.setWaiting(false);
+      append("\nCommand interrupted\n");
       inputEnable();
       inputFocus();
     }
   }
 
   public void execute(String cmd) {
-    ShellProcess process = shell.createProcess(cmd);
+    process = shell.createProcess(cmd);
     setWaiting(true);
-    currentCtx = new ExecuteProcessContext(this);
+    processCtx = new ExecuteProcessContext(this);
     inputDisable();
-    process.execute(currentCtx);
+    process.execute(processCtx);
   }
 
   public CommandCompletion complete(String prefix) {
@@ -353,6 +371,13 @@ public class CrashSwingController {
     int charWidth = metrics.charWidth('a');
     int charNumber = editor.getWidth() / charWidth;
     return charNumber - 5; // 5 handle the margin.
+  }
+
+  public int getHeight() {
+    FontMetrics metrics = Toolkit.getDefaultToolkit().getFontMetrics(editor.getFont());
+    int charHeight = metrics.getHeight() ;
+    int charNumber = (editor.getHeight() - 30) / charHeight; // 30 px for the input
+    return charNumber;
   }
 
   public void historyAdd(String value) {
@@ -379,10 +404,6 @@ public class CrashSwingController {
 
   public void inputClear() {
     input.setText("");
-  }
-
-  public void contentClear() {
-    editor.setText("");
   }
 
   public void inputFocus() {
@@ -423,11 +444,11 @@ public class CrashSwingController {
   }
 
   public void append(String content) {
-    append(content, null);
+    append(content, null, doc);
   }
 
   public void appendTypedCommand(String content) {
-    append("\n\n" + prompt + content + "\n\n", null);
+    append("\n\n" + prompt + content + "\n\n", null, doc);
   }
 
   public String readData(String key, String defaultValue) {
@@ -447,7 +468,21 @@ public class CrashSwingController {
     storage.saveCustomPropertiesTo(data);
   }
 
-  public void append(String content, Style style) {
+  public void append(List<ExecuteProcessContext.ResultOuput> output) {
+    reloadDocument(output, doc);
+  }
+
+  public void reloadDocument(List<ExecuteProcessContext.ResultOuput> output, StyledDocument doc) {
+
+    for (ExecuteProcessContext.ResultOuput o : output) {
+      append(o.value, o.style, doc);
+    }
+    this.editor.setDocument(doc);
+    this.doc = doc;
+
+  }
+
+  public void append(String content, Style style, StyledDocument document) {
 
     MutableAttributeSet attributes = null;
     if (style == null) {
@@ -457,10 +492,12 @@ public class CrashSwingController {
     }
 
     try {
-      doc.insertString(doc.getLength(), content, attributes);
-      scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
-      scrollPane.validate();
-    } catch (BadLocationException ignore) {}
+      document.insertString(document.getLength(), content, attributes);
+    } catch (BadLocationException e) {
+      e.printStackTrace();
+    }
+    scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
+
 
   }
 
@@ -469,11 +506,16 @@ public class CrashSwingController {
   }
 
   public void inputDisable() {
-    pane.remove(bottomPane);
+    input.setEditable(false);
+    input.setCaretColor(getBackgroundColor());
+    bufferClear();
   }
 
   public void inputEnable() {
-    pane.add(bottomPane, BorderLayout.SOUTH);
+    input.setEditable(true);
+    input.setCaretColor(getForegroundColor());
+    input.insert(inputBuffer.toString(), 0);
+    input.setCaretPosition(inputBuffer.toString().length());
     scrollPane.repaint();
     bottomPane.repaint();
   }
