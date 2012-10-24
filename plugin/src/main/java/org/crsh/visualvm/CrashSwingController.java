@@ -31,7 +31,7 @@ public class CrashSwingController {
 
   private WaitingPanel pane;
   private JPanel configPanel;
-  public JTextPane editor;
+  private JTextPane editor;
   private StyledDocument doc;
   private JScrollPane scrollPane;
   private JLabel promptLabel;
@@ -45,6 +45,8 @@ public class CrashSwingController {
   private JButton undeploy;
   private JLabel crashHomeLabel;
   private JButton browse;
+
+  private TermKeyListener keyListener;
 
   private Shell shell;
   private String prompt;
@@ -131,7 +133,8 @@ public class CrashSwingController {
 
     pane.add(configPanel, BorderLayout.NORTH);
 
-    input.addKeyListener(new TermKeyListener(this));
+    keyListener = new TermKeyListener(this);
+    input.addKeyListener(keyListener);
     input.addKeyListener(new CtrlCListener(this));
     input.addKeyListener(new BufferEntryListener(this));
     editor.addMouseListener(new TransferFocusListener(this));
@@ -332,6 +335,8 @@ public class CrashSwingController {
       append("\nCommand interrupted\n");
       inputEnable();
       inputFocus();
+      process = null;
+      processCtx = null;
     }
   }
 
@@ -357,7 +362,7 @@ public class CrashSwingController {
   public int getHeight() {
     FontMetrics metrics = Toolkit.getDefaultToolkit().getFontMetrics(editor.getFont());
     int charHeight = metrics.getHeight() ;
-    int charNumber = (editor.getHeight() - 30) / charHeight; // 30 px for the input
+    int charNumber = (scrollPane.getHeight() - 30) / charHeight; // 30 px for the input
     return charNumber;
   }
 
@@ -460,6 +465,7 @@ public class CrashSwingController {
     }
     this.editor.setDocument(doc);
     this.doc = doc;
+    this.editor.setCaretPosition(doc.getLength());
 
   }
 
@@ -477,9 +483,6 @@ public class CrashSwingController {
     } catch (BadLocationException e) {
       e.printStackTrace();
     }
-    scrollPane.getVerticalScrollBar().setValue(scrollPane.getVerticalScrollBar().getMaximum());
-
-
   }
 
   public WaitingPanel getPane() {
@@ -490,6 +493,7 @@ public class CrashSwingController {
     input.setEditable(false);
     input.setCaretColor(theme.bg());
     bufferClear();
+    input.removeKeyListener(keyListener);
   }
 
   public void inputEnable() {
@@ -497,8 +501,7 @@ public class CrashSwingController {
     input.setCaretColor(theme.fg());
     input.insert(inputBuffer.toString(), 0);
     input.setCaretPosition(inputBuffer.toString().length());
-    scrollPane.repaint();
-    bottomPane.repaint();
+    input.addKeyListener(keyListener);
   }
 
   public MutableAttributeSet buildTextAttribute(Style style) {

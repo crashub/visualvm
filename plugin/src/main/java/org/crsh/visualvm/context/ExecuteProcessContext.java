@@ -1,6 +1,5 @@
 package org.crsh.visualvm.context;
 
-import org.crsh.shell.ShellProcess;
 import org.crsh.shell.ShellProcessContext;
 import org.crsh.shell.ShellResponse;
 import org.crsh.text.CLS;

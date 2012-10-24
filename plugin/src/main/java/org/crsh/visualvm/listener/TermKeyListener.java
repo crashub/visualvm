@@ -35,6 +35,9 @@ public class TermKeyListener implements KeyListener {
     switch (e.getKeyCode()) {
       case KeyEvent.VK_ENTER:
         e.consume();
+        if (value.length() == 0) {
+          return;
+        }
         controller.appendTypedCommand(value);
         controller.historyAdd(value);
         controller.inputClear();
@@ -62,7 +65,6 @@ public class TermKeyListener implements KeyListener {
 
       case KeyEvent.VK_TAB:
         e.consume();
-        //final Point caretPosition = controller.caretPos();
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
