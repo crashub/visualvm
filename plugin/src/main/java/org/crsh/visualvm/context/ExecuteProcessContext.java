@@ -65,6 +65,11 @@ public class ExecuteProcessContext implements ShellProcessContext {
   }
 
   public void end(ShellResponse response) {
+
+    if (controller.isWaiting()) {
+      controller.setWaiting(false);
+    }
+    
     controller.inputEnable();
     controller.inputFocus();
   }

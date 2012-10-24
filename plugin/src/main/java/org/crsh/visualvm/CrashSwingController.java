@@ -10,7 +10,6 @@ import org.crsh.shell.impl.remoting.RemoteServer;
 import org.crsh.text.Style;
 import org.crsh.visualvm.context.ExecuteProcessContext;
 import org.crsh.visualvm.listener.*;
-import org.crsh.visualvm.ui.ColorIcon;
 import org.crsh.visualvm.ui.WaitingPanel;
 
 import javax.swing.*;
@@ -41,8 +40,7 @@ public class CrashSwingController {
   private JPanel bottomPane;
 
   private JLabel homeLabel;
-  private JButton bgButton;
-  private JButton fgButton;
+  private JComboBox themes;
   private JButton deploy;
   private JButton undeploy;
   private JLabel crashHomeLabel;
@@ -56,14 +54,13 @@ public class CrashSwingController {
   private ShellProcess process;
   private ExecuteProcessContext processCtx;
 
-  private Color backgroundColor;
-  private Color foregroundColor;
-
   private String crashHome;
   private final Storage storage;
   private final File data;
   private RemoteServer server;
   private StringBuilder inputBuffer;
+
+  private Theme theme;
 
   public CrashSwingController(Application application) {
     this.application = application;
@@ -74,6 +71,10 @@ public class CrashSwingController {
   }
 
   public void initUI() {
+
+    //
+    String themeName = readData("crash.theme", Theme.SHADOW.name());
+    theme = Theme.valueOf(themeName);
 
     //
     candidates = new JPopupMenu();
@@ -94,7 +95,7 @@ public class CrashSwingController {
 
     //
     input = new JTextArea();
-    input.setCaretColor(getForegroundColor());
+    input.setCaretColor(theme.fg());
     input.setBorder(border);
     input.setFont(font);
 
@@ -109,7 +110,7 @@ public class CrashSwingController {
     bottomPane.add(input, BorderLayout.CENTER);
 
     //
-    pane = new WaitingPanel();
+    pane = new WaitingPanel(theme.waiting());
     pane.setLayout(new BorderLayout());
 
     //
@@ -125,8 +126,8 @@ public class CrashSwingController {
     configPanel.add(browse);
     configPanel.add(deploy);
 
-    bgButton = new JButton("Background", new ColorIcon(null));
-    fgButton = new JButton("Foreground", new ColorIcon(null));
+    themes = new JComboBox(new Theme[]{ Theme.SHADOW, Theme.LIGHT });
+    themes.setSelectedItem(theme);
 
     pane.add(configPanel, BorderLayout.NORTH);
 
@@ -134,19 +135,15 @@ public class CrashSwingController {
     input.addKeyListener(new CtrlCListener(this));
     input.addKeyListener(new BufferEntryListener(this));
     editor.addMouseListener(new TransferFocusListener(this));
-    bgButton.addActionListener(new ColorChangeListener(this, ColorChangeListener.Type.BACKGROUND));
-    fgButton.addActionListener(new ColorChangeListener(this, ColorChangeListener.Type.FOREGROUND));
     browse.addActionListener(new PathChangeListener(this));
     deploy.addActionListener(new DeployAgentListener(this));
     undeploy.addActionListener(new UndeployAgentListener(this));
+    themes.addItemListener(new SelectThemeListener(this));
 
     this.doc = editor.getStyledDocument();
-
     this.homeLabel = crashHomeLabel;
-
     setCrashHome(readData("crash.home", System.getProperty("user.home") + "/crash"));
-    setBackgroundColor(new Color(Integer.valueOf(readData("crash.bg", String.valueOf(Color.BLACK.getRGB())))), false);
-    setForegroundColor(new Color(Integer.valueOf(readData("crash.fg", String.valueOf(Color.GRAY.getRGB())))), false);
+    updateColor();
 
   }
 
@@ -155,8 +152,7 @@ public class CrashSwingController {
     pane.add(bottomPane, BorderLayout.SOUTH);
     configPanel.removeAll();
     configPanel.add(undeploy);
-    configPanel.add(bgButton);
-    configPanel.add(fgButton);
+    configPanel.add(themes);
     configPanel.repaint();
     inputFocus();
   }
@@ -273,45 +269,30 @@ public class CrashSwingController {
 
   }
 
-  public void setBackgroundColor(Color color, boolean persist) {
-    this.backgroundColor = color;
-    if (persist) writeData("crash.bg",  String.valueOf(color.getRGB()));
+  public void updateColor() {
 
-    editor.setBackground(color);
-    editor.setCaretColor(color);
-    input.setBackground(color);
-    promptLabel.setBackground(color);
-    bottomPane.setBackground(color);
-    pane.setBackground(color);
-    ((ColorIcon) bgButton.getIcon()).setColor(color);
+    //Foreground
+    editor.setForeground(theme.fg());
+    input.setForeground(theme.fg());
+    input.setCaretColor(theme.fg());
+    promptLabel.setForeground(theme.fg());
+    pane.setForeground(theme.fg());
+
+    // Background
+    editor.setBackground(theme.bg());
+    editor.setCaretColor(theme.bg());
+    input.setBackground(theme.bg());
+    promptLabel.setBackground(theme.bg());
+    bottomPane.setBackground(theme.bg());
+    pane.setBackground(theme.bg());
+
+    //
+    pane.updateImageUrl(theme.waiting());
   }
 
-  public void setBackgroundColor(Color color) {
-    setBackgroundColor(color, true);
-  }
-
-  public void setForegroundColor(Color color, boolean persist) {
-    this.foregroundColor = color;
-    if (persist) writeData("crash.fg",  String.valueOf(color.getRGB()));
-
-    editor.setForeground(color);
-    input.setForeground(color);
-    input.setCaretColor(color);
-    promptLabel.setForeground(color);
-    pane.setForeground(color);
-    ((ColorIcon) fgButton.getIcon()).setColor(color);
-  }
-
-  public void setForegroundColor(Color color) {
-    setForegroundColor(color, true);
-  }
-
-  public Color getBackgroundColor() {
-    return backgroundColor;
-  }
-
-  public Color getForegroundColor() {
-    return foregroundColor;
+  public void setTheme(Theme theme) {
+    this.theme = theme;
+    writeData("crash.theme", theme.name());
   }
 
   public String getCrashHome() {
@@ -507,13 +488,13 @@ public class CrashSwingController {
 
   public void inputDisable() {
     input.setEditable(false);
-    input.setCaretColor(getBackgroundColor());
+    input.setCaretColor(theme.bg());
     bufferClear();
   }
 
   public void inputEnable() {
     input.setEditable(true);
-    input.setCaretColor(getForegroundColor());
+    input.setCaretColor(theme.fg());
     input.insert(inputBuffer.toString(), 0);
     input.setCaretPosition(inputBuffer.toString().length());
     scrollPane.repaint();
@@ -570,14 +551,14 @@ public class CrashSwingController {
     }
 
     switch (c) {
-      case red: return Color.RED;
-      case black: return Color.BLACK;
-      case blue: return Color.BLUE;
-      case cyan: return Color.CYAN;
-      case green: return Color.GREEN;
-      case magenta: return Color.MAGENTA;
-      case white: return Color.WHITE;
-      case yellow: return Color.YELLOW;
+      case red: return theme.red();
+      case black: return theme.black();
+      case blue: return theme.blue();
+      case cyan: return theme.cyan();
+      case green: return theme.green();
+      case magenta: return theme.magenta();
+      case white: return theme.white();
+      case yellow: return theme.yellow();
       default: return null;
     }
   }
