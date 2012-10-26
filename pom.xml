@@ -13,7 +13,6 @@
   <scm>
     <connection>scm:git:git://github.com/defrancea/crash-visualvm.git</connection>
     <developerConnection>scm:git:git@github.com:defrancea/crash-visualvm.git</developerConnection>
-    <url>http://fisheye.exoplatform.org/browse/defrancea</url>
   </scm>
 
   <properties>
@@ -39,7 +38,7 @@
     </license>
   </licenses>
 
-  <url>http://julienviet.com/crash/</url>
+  <url>http://www.crashub.org/visualvm/</url>
 
   <dependencyManagement>
     <dependencies>
