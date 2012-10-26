@@ -7,14 +7,15 @@ import org.crsh.cmdline.CommandCompletion;
 import org.crsh.shell.Shell;
 import org.crsh.shell.ShellProcess;
 import org.crsh.shell.impl.remoting.RemoteServer;
-import org.crsh.text.Style;
 import org.crsh.visualvm.context.ExecuteProcessContext;
-import org.crsh.visualvm.listener.*;
+import org.crsh.visualvm.ui.BottomPanel;
+import org.crsh.visualvm.ui.ContentPanel;
+import org.crsh.visualvm.ui.TopPanel;
 import org.crsh.visualvm.ui.WaitingPanel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.text.*;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -27,27 +28,17 @@ import java.util.Properties;
  */
 public class CrashSwingController {
 
+  //
   private final Application application;
 
+  //
   private WaitingPanel pane;
-  private JPanel configPanel;
-  private JTextPane editor;
-  private StyledDocument doc;
-  private JScrollPane scrollPane;
-  private JLabel promptLabel;
-  private JTextArea input;
+  private TopPanel topPanel;
+  private ContentPanel contentPanel;
+  private BottomPanel bottomPane;
+  private JScrollPane scrolledContent;
+
   private JPopupMenu candidates;
-  private JPanel bottomPane;
-
-  private JLabel homeLabel;
-  private JComboBox themes;
-  private JButton deploy;
-  private JButton undeploy;
-  private JLabel crashHomeLabel;
-  private JButton browse;
-
-  private TermKeyListener keyListener;
-
   private Shell shell;
   private String prompt;
 
@@ -75,157 +66,55 @@ public class CrashSwingController {
   public void initUI() {
 
     //
-    String themeName = readData("crash.theme", Theme.SHADOW.name());
+    String themeName = readData("crash.theme", Theme.DARK.name());
     theme = Theme.valueOf(themeName);
 
     //
+    pane = new WaitingPanel(theme.waiting());
     candidates = new JPopupMenu();
     Font font = new Font("Monospaced", Font.PLAIN, 14);
     Border border = BorderFactory.createEmptyBorder(14, 8, 14, 8);
 
     //
-    editor = new JTextPane();
-    editor.setAutoscrolls(true);
-    editor.setBorder(border);
-    editor.setFont(font);
-    editor.setEditable(false);
-    editor.setDocument(new DefaultStyledDocument());
+    topPanel = new TopPanel(this);
+    contentPanel = new ContentPanel(this, font, border);
+    bottomPane = new BottomPanel(this, font, border);
+    scrolledContent = contentPanel.asScrollable();
 
-    //
-    scrollPane = new JScrollPane(editor);
-    scrollPane.setBorder(BorderFactory.createEmptyBorder());
-
-    //
-    input = new JTextArea();
-    input.setCaretColor(theme.fg());
-    input.setBorder(border);
-    input.setFont(font);
-
-    //
-    promptLabel = new JLabel("");
-    promptLabel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
-
-    //
-    bottomPane = new JPanel();
-    bottomPane.setLayout(new BorderLayout());
-    bottomPane.add(promptLabel, BorderLayout.WEST);
-    bottomPane.add(input, BorderLayout.CENTER);
-
-    //
-    pane = new WaitingPanel(theme.waiting());
-    pane.setLayout(new BorderLayout());
-
-    //
-    crashHomeLabel = new JLabel();
-    browse = new JButton("Browse");
-    deploy = new JButton("Deploy agent");
-    undeploy = new JButton("Undeploy agent");
-
-    configPanel = new JPanel();
-    configPanel.setBackground(Color.WHITE);
-
-    configPanel.add(crashHomeLabel);
-    configPanel.add(browse);
-    configPanel.add(deploy);
-
-    themes = new JComboBox(new Theme[]{ Theme.SHADOW, Theme.LIGHT });
-    themes.setSelectedItem(theme);
-
-    pane.add(configPanel, BorderLayout.NORTH);
-
-    keyListener = new TermKeyListener(this);
-    input.addKeyListener(keyListener);
-    input.addKeyListener(new CtrlCListener(this));
-    input.addKeyListener(new BufferEntryListener(this));
-    editor.addMouseListener(new TransferFocusListener(this));
-    browse.addActionListener(new PathChangeListener(this));
-    deploy.addActionListener(new DeployAgentListener(this));
-    undeploy.addActionListener(new UndeployAgentListener(this));
-    themes.addItemListener(new SelectThemeListener(this));
-
-    this.doc = editor.getStyledDocument();
-    this.homeLabel = crashHomeLabel;
+    pane.add(topPanel, BorderLayout.NORTH);
     setCrashHome(readData("crash.home", System.getProperty("user.home") + "/crash"));
     updateColor();
 
   }
 
   public void showTerminal() {
-    pane.add(scrollPane, BorderLayout.CENTER);
+    pane.add(scrolledContent, BorderLayout.CENTER);
     pane.add(bottomPane, BorderLayout.SOUTH);
-    configPanel.removeAll();
-    configPanel.add(undeploy);
-    configPanel.add(themes);
-    configPanel.repaint();
+    topPanel.showDisconnect();
     inputFocus();
   }
 
   public void reinitUI() {
-    pane.remove(scrollPane);
+    pane.remove(scrolledContent);
     pane.remove(bottomPane);
-    configPanel.removeAll();
-    configPanel.add(crashHomeLabel);
-    configPanel.add(browse);
-    configPanel.add(deploy);
+    topPanel.showConnect();
   }
 
-  public void bufferClear() {
-    inputBuffer = new StringBuilder();
-  }
+  public void updateColor() {
 
-  public void bufferAppend(String value) {
-    inputBuffer.append(value);
-  }
+    //Foreground
+    contentPanel.setForeground(theme.fg());
+    bottomPane.setForeground(theme.fg());
+    pane.setForeground(theme.fg());
 
-  public boolean deploy() {
+    // Background
+    contentPanel.setBackground(theme.bg());
+    contentPanel.setCaretColor(theme.bg());
+    bottomPane.setBackground(theme.input());
+    pane.setBackground(theme.bg());
 
-    server = new RemoteServer(0);
-    
-    try {
-
-      File cmdDir = new File(crashHome + "/cmd");
-      File confDir = new File(crashHome + "/conf");
-
-      if (!cmdDir.exists()) {
-        cmdDir.mkdirs();
-      }
-
-      if (!confDir.exists()) {
-        confDir.mkdirs();
-      }
-
-      StringBuilder options = new StringBuilder();
-
-      options.append("--cmd ");
-      options.append(cmdDir.getAbsolutePath());
-      options.append(" --conf ");
-      options.append(confDir.getAbsolutePath());
-      options.append(" ");
-      options.append(String.valueOf(listen(server)));
-
-      VirtualMachine vm = VirtualMachine.attach("" + this.application.getPid());
-      vm.loadAgent(agentPath(), options.toString());
-
-      //
-      server.accept();
-
-      //
-      this.shell = server.getShell();
-      this.prompt = shell.getPrompt();
-
-      this.editor.setText(shell.getWelcome());
-      this.promptLabel.setText(shell.getPrompt());
-      return true;
-
-    } catch (Exception e) {
-      fail(e);
-      return false;
-    }
-
-  }
-
-  public void undeploy() {
-    server.close();
+    //
+    pane.updateImage(theme.waiting());
   }
 
   private String agentPath() {
@@ -272,99 +161,64 @@ public class CrashSwingController {
 
   }
 
-  public void updateColor() {
+  /*
+   * Deployment
+   */
 
-    //Foreground
-    editor.setForeground(theme.fg());
-    input.setForeground(theme.fg());
-    input.setCaretColor(theme.fg());
-    promptLabel.setForeground(theme.fg());
-    pane.setForeground(theme.fg());
+  public boolean deploy() {
 
-    // Background
-    editor.setBackground(theme.bg());
-    editor.setCaretColor(theme.bg());
-    input.setBackground(theme.bg());
-    promptLabel.setBackground(theme.bg());
-    bottomPane.setBackground(theme.bg());
-    pane.setBackground(theme.bg());
+    server = new RemoteServer(0);
 
-    //
-    pane.updateImageUrl(theme.waiting());
-  }
+    try {
 
-  public void setTheme(Theme theme) {
-    this.theme = theme;
-    writeData("crash.theme", theme.name());
-  }
+      File cmdDir = new File(crashHome + "/cmd");
+      File confDir = new File(crashHome + "/conf");
 
-  public String getCrashHome() {
-    return crashHome;
-  }
+      if (!cmdDir.exists()) {
+        cmdDir.mkdirs();
+      }
 
-  public void setCrashHome(String crashHome, boolean persist) {
-    this.crashHome = crashHome;
-    this.homeLabel.setText("Crash home : " + crashHome);
-    if (persist) writeData("crash.home",  crashHome);
-  }
+      if (!confDir.exists()) {
+        confDir.mkdirs();
+      }
 
-  public void setCrashHome(String crashHome) {
-    setCrashHome(crashHome, true);
-  }
+      StringBuilder options = new StringBuilder();
 
-  public void insertCompletion(String value) {
-    input.insert(value, input.getCaretPosition());
-    input.requestFocus();
-    candidates.removeAll();
-  }
+      options.append("--cmd ");
+      options.append(cmdDir.getAbsolutePath());
+      options.append(" --conf ");
+      options.append(confDir.getAbsolutePath());
+      options.append(" ");
+      options.append(String.valueOf(listen(server)));
 
-  public boolean isWaiting() {
-    return this.pane.isWaiting();
-  }
+      VirtualMachine vm = VirtualMachine.attach("" + this.application.getPid());
+      vm.loadAgent(agentPath(), options.toString());
 
-  public void setWaiting(boolean b) {
-    this.pane.setWaiting(b);
-    editor.setFocusable(!b);
-  }
+      //
+      server.accept();
 
-  public void cancelProcess() {
-    if (process != null && processCtx != null) {
-      process.cancel();
-      editor.setFocusable(true);
-      pane.setWaiting(false);
-      append("\nCommand interrupted\n");
-      inputEnable();
-      inputFocus();
-      process = null;
-      processCtx = null;
+      //
+      this.shell = server.getShell();
+      this.prompt = shell.getPrompt();
+
+      this.contentPanel.setText(shell.getWelcome());
+      this.bottomPane.setPrompt(shell.getPrompt());
+      return true;
+
+    } catch (Exception e) {
+      fail(e);
+      return false;
     }
+
   }
 
-  public void execute(String cmd) {
-    process = shell.createProcess(cmd);
-    setWaiting(true);
-    processCtx = new ExecuteProcessContext(this);
-    inputDisable();
-    process.execute(processCtx);
+  public void undeploy() {
+    server.close();
   }
 
-  public CommandCompletion complete(String prefix) {
-    return shell.complete(prefix);
-  }
-
-  public int getWidth() {
-    FontMetrics metrics = Toolkit.getDefaultToolkit().getFontMetrics(editor.getFont());
-    int charWidth = metrics.charWidth('a');
-    int charNumber = editor.getWidth() / charWidth;
-    return charNumber - 5; // 5 handle the margin.
-  }
-
-  public int getHeight() {
-    FontMetrics metrics = Toolkit.getDefaultToolkit().getFontMetrics(editor.getFont());
-    int charHeight = metrics.getHeight() ;
-    int charNumber = (scrollPane.getHeight() - 30) / charHeight; // 30 px for the input
-    return charNumber;
-  }
+  /*
+   * History
+   */
 
   public void historyAdd(String value) {
     history.add(value);
@@ -373,53 +227,24 @@ public class CrashSwingController {
 
   public void historyPrevious() {
     if (historyPos > 0) {
-      input.setText(history.get(--historyPos));
-      input.setCaretPosition(input.getText().length());
+      bottomPane.setText(history.get(--historyPos));
+      bottomPane.moveCaretToEnd();
     }
   }
 
   public void historyNext() {
     if (historyPos < history.size() - 1) {
-      input.setText(history.get(++historyPos));
-      input.setCaretPosition(input.getText().length());
+      bottomPane.setText(history.get(++historyPos));
+      bottomPane.moveCaretToEnd();
     }
     else {
-      input.setText("");
+      bottomPane.setText("");
     }
   }
 
-  public void inputClear() {
-    input.setText("");
-  }
-
-  public void inputFocus() {
-    input.requestFocusInWindow();
-  }
-
-  public String inputRead() {
-    return input.getText();
-  }
-
-  public String inputReadToCaret() {
-    return inputRead().substring(0, caretPosition());
-  }
-
-  public int caretPosition() {
-    return input.getCaretPosition();
-  }
-
-  public void candidatesShow() {
-    
-    Point caretPosition = input.getCaret().getMagicCaretPosition();
-
-    if (caretPosition == null) {
-      candidates.show(input, 0, 0);
-    } else {
-      candidates.show(input, (int) caretPosition.getX(), (int) caretPosition.getY());
-    }
-    MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{candidates, (JMenuItem) candidates.getComponent(0)});
-
-  }
+  /*
+   * Completion
+   */
 
   public void candidatesClear() {
     candidates.removeAll();
@@ -429,13 +254,28 @@ public class CrashSwingController {
     candidates.add(candidate);
   }
 
-  public void append(String content) {
-    append(content, null, doc);
+  public void candidatesShow() {
+
+    Point caretPosition = bottomPane.getCaretPoint();
+
+    if (caretPosition == null) {
+      candidates.show(bottomPane, 0, 0);
+    } else {
+      candidates.show(bottomPane, (int) caretPosition.getX(), (int) caretPosition.getY());
+    }
+    MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{candidates, (JMenuItem) candidates.getComponent(0)});
+
   }
 
-  public void appendTypedCommand(String content) {
-    append("\n\n" + prompt + content + "\n\n", null, doc);
+  public void insertCompletion(String value) {
+    bottomPane.insertAtCaret(value);
+    bottomPane.requestFocus();
+    candidates.removeAll();
   }
+
+  /*
+   * Storage
+   */
 
   public String readData(String key, String defaultValue) {
 
@@ -454,116 +294,137 @@ public class CrashSwingController {
     storage.saveCustomPropertiesTo(data);
   }
 
-  public void append(List<ExecuteProcessContext.ResultOuput> output) {
-    reloadDocument(output, doc);
+  /*
+   * Input
+   */
+
+  public String getPrompt() {
+    return prompt;
   }
 
-  public void reloadDocument(List<ExecuteProcessContext.ResultOuput> output, StyledDocument doc) {
-
-    for (ExecuteProcessContext.ResultOuput o : output) {
-      append(o.value, o.style, doc);
-    }
-    this.editor.setDocument(doc);
-    this.doc = doc;
-    this.editor.setCaretPosition(doc.getLength());
-
+  public void inputDisable() {
+    bottomPane.setEnabled(false);
+    bufferClear();
   }
 
-  public void append(String content, Style style, StyledDocument document) {
+  public void inputEnable() {
+    bottomPane.setEnabled(true);
+    bottomPane.setText(inputBuffer.toString());
+  }
 
-    MutableAttributeSet attributes = null;
-    if (style == null) {
-      attributes = new SimpleAttributeSet();
-    } else {
-      attributes = buildTextAttribute(style);
-    }
+  public void inputClear() {
+    bottomPane.setText("");
+  }
 
-    try {
-      document.insertString(document.getLength(), content, attributes);
-    } catch (BadLocationException e) {
-      e.printStackTrace();
-    }
+  public void inputFocus() {
+    bottomPane.requestFocusInWindow();
+  }
+
+  public String inputRead() {
+    return bottomPane.getText();
+  }
+
+  public String inputReadToCaret() {
+    return inputRead().substring(0, inputCaretPosition());
+  }
+
+  public int inputCaretPosition() {
+    return bottomPane.getCaretPosition();
+  }
+
+  /*
+   * Content
+   */
+
+  public void appendTypedCommand(String content) {
+    contentPanel.appendTypedCommand(content);
+  }
+  
+  public void append(java.util.List<ExecuteProcessContext.ResultOuput> output) {
+    contentPanel.append(output);
+  }
+
+  public void reloadContent(java.util.List<ExecuteProcessContext.ResultOuput> output, StyledDocument doc) {
+    contentPanel.reloadContent(output, doc);
+  }
+
+  /*
+   * Buffer
+   */
+
+  public void bufferClear() {
+    inputBuffer = new StringBuilder();
+  }
+
+  public void bufferAppend(String value) {
+    inputBuffer.append(value);
+  }
+  
+  /*
+   * Misc
+   */
+
+  public Theme getTheme() {
+    return theme;
   }
 
   public WaitingPanel getPane() {
     return pane;
   }
 
-  public void inputDisable() {
-    input.setEditable(false);
-    input.setCaretColor(theme.bg());
-    bufferClear();
-    input.removeKeyListener(keyListener);
+  public int getContentWidth() {
+    return contentPanel.getWidthInChar();
   }
 
-  public void inputEnable() {
-    input.setEditable(true);
-    input.setCaretColor(theme.fg());
-    input.insert(inputBuffer.toString(), 0);
-    input.setCaretPosition(inputBuffer.toString().length());
-    input.addKeyListener(keyListener);
+  public int getContentHeight() {
+    return contentPanel.getHeightInChar();
   }
 
-  public MutableAttributeSet buildTextAttribute(Style style) {
-
-    //
-    if (style == null) {
-      throw new NullPointerException();
-    }
-
-    //
-    if (style == Style.reset || !(style instanceof Style.Composite)) {
-      return new SimpleAttributeSet();
-    }
-
-    //
-    Style.Composite composite = (Style.Composite) style;
-    MutableAttributeSet attributes = new SimpleAttributeSet();
-    Color fg = mapColor(composite.getForeground());
-    Color bg = mapColor(composite.getBackground());
-
-    //
-    if (fg != null) {
-      StyleConstants.setForeground(attributes, fg);
-    }
-
-    //
-    if (bg != null) {
-      StyleConstants.setBackground(attributes, bg);
-    }
-
-    //
-    if (composite.getBold() != null) {
-      StyleConstants.setBold(attributes, composite.getBold());
-    }
-
-    //
-    if (composite.getUnderline() != null) {
-      StyleConstants.setUnderline(attributes, composite.getUnderline());
-    }
-
-    //
-    return attributes;
-
+  public void execute(String cmd) {
+    process = shell.createProcess(cmd);
+    setWaiting(true);
+    processCtx = new ExecuteProcessContext(this);
+    inputDisable();
+    process.execute(processCtx);
   }
 
-  private Color mapColor(org.crsh.text.Color c) {
+  public CommandCompletion complete(String prefix) {
+    return shell.complete(prefix);
+  }
+  public boolean isWaiting() {
+    return this.pane.isWaiting();
+  }
 
-    if (c == null) {
-      return null;
-    }
+  public void setWaiting(boolean b) {
+    this.pane.setWaiting(b);
+    this.contentPanel.setFocusable(!b);
+  }
 
-    switch (c) {
-      case red: return theme.red();
-      case black: return theme.black();
-      case blue: return theme.blue();
-      case cyan: return theme.cyan();
-      case green: return theme.green();
-      case magenta: return theme.magenta();
-      case white: return theme.white();
-      case yellow: return theme.yellow();
-      default: return null;
+  public void cancelProcess() {
+    if (process != null && processCtx != null) {
+      process.cancel();
+      contentPanel.setFocusable(true);
+      pane.setWaiting(false);
+      contentPanel.append("\nCommand interrupted\n");
+      inputEnable();
+      inputFocus();
+      process = null;
+      processCtx = null;
     }
   }
 
+  public void setTheme(Theme theme) {
+    this.theme = theme;
+    writeData("crash.theme", theme.name());
+  }
+
+  public String getCrashHome() {
+    return crashHome;
+  }
+
+  public void setCrashHome(String crashHome) {
+    this.crashHome = crashHome;
+    writeData("crash.home",  crashHome);
+  }
+  
 }

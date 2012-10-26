@@ -2,6 +2,7 @@ package org.crsh.visualvm.listener;
 
 import org.crsh.visualvm.CrashSwingController;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 

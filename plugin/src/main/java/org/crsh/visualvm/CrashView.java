@@ -3,9 +3,8 @@ package org.crsh.visualvm;
 import com.sun.tools.visualvm.application.Application;
 import com.sun.tools.visualvm.core.ui.DataSourceView;
 import com.sun.tools.visualvm.core.ui.components.DataViewComponent;
-import org.crsh.visualvm.listener.*;
 
-import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
@@ -18,7 +17,7 @@ public class CrashView extends DataSourceView {
     super(
         application,
         "Crash",
-        new ImageIcon(Thread.currentThread().getContextClassLoader().getResource("org/crsh/image/icon.png")).getImage(),
+        Resources.ICON.asImage(),
         60,
         false);
 
@@ -37,11 +36,11 @@ public class CrashView extends DataSourceView {
 
     //
     DataViewComponent dvc = new DataViewComponent(masterView, masterConfiguration);
-    dvc.configureDetailsArea(new DataViewComponent.DetailsAreaConfiguration("Terminal", true), DataViewComponent.BOTTOM_LEFT);
-    dvc.addDetailsView(new DataViewComponent.DetailsView("Terminal", null, 10, controller.getPane(), null), DataViewComponent.BOTTOM_LEFT);
-    dvc.addAncestorListener(new InitFocusListener(controller));
+    dvc.setBackground(Color.BLACK);
 
     //
+    dvc.setLayout(new BorderLayout());
+    dvc.add(controller.getPane(), BorderLayout.CENTER);
     return dvc;
 
   }

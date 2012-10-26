@@ -1,8 +1,9 @@
 package org.crsh.visualvm.ui;
 
+import org.crsh.visualvm.Resources;
+
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 
 /**
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
@@ -12,8 +13,9 @@ public class WaitingPanel extends JPanel {
   public boolean waiting = false;
   private Image waitingImage;
 
-  public WaitingPanel(URL imageUrl) {
-    updateImageUrl(imageUrl);
+  public WaitingPanel(Resources waitingResource) {
+    updateImage(waitingResource);
+    setLayout(new BorderLayout());
   }
 
   @Override
@@ -48,8 +50,8 @@ public class WaitingPanel extends JPanel {
     return waiting;
   }
 
-  public void updateImageUrl(URL imageUrl) {
-    this.waitingImage = this.getToolkit().createImage(imageUrl);
+  public void updateImage(Resources waitingResource) {
+    this.waitingImage = this.getToolkit().createImage(waitingResource.url());
   }
   
 }

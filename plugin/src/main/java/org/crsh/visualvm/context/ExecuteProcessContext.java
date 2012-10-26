@@ -38,11 +38,11 @@ public class ExecuteProcessContext implements ShellProcessContext {
   }
 
   public int getWidth() {
-    return controller.getWidth();
+    return controller.getContentWidth();
   }
 
   public int getHeight() {
-    return controller.getHeight();
+    return controller.getContentHeight();
   }
 
   public String getProperty(String name) {
@@ -55,7 +55,7 @@ public class ExecuteProcessContext implements ShellProcessContext {
 
   public void flush() {
     if (cleared) {
-      controller.reloadDocument(Collections.unmodifiableList(buffer), new DefaultStyledDocument());
+      controller.reloadContent(Collections.unmodifiableList(buffer), new DefaultStyledDocument());
       cleared = false;
     } else {
       controller.append(Collections.unmodifiableList(buffer));

@@ -12,9 +12,11 @@ import java.awt.event.ActionListener;
 public class PathChangeListener implements ActionListener {
 
   private final CrashSwingController controller;
+  private final JTextField input;
 
-  public PathChangeListener(CrashSwingController controller) {
+  public PathChangeListener(CrashSwingController controller, JTextField input) {
     this.controller = controller;
+    this.input = input;
   }
 
   public void actionPerformed(ActionEvent e) {
@@ -25,7 +27,7 @@ public class PathChangeListener implements ActionListener {
     chooser.setAcceptAllFileFilterUsed(false);
 
     if (chooser.showOpenDialog(controller.getPane()) == JFileChooser.APPROVE_OPTION) {
-      controller.setCrashHome((chooser.getSelectedFile().getAbsolutePath()));
+      input.setText((chooser.getSelectedFile().getAbsolutePath()));
     }
   }
 }

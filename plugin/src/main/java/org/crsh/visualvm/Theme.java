@@ -1,16 +1,15 @@
 package org.crsh.visualvm;
 
 import java.awt.*;
-import java.net.URL;
 
 /**
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
  */
 public enum Theme {
 
-  SHADOW {
+  DARK {
     public Color red() { return new Color(210, 82, 82); }
-    public Color black() {return new Color(50, 50, 50); }
+    public Color black() { return new Color(50, 50, 50); }
     public Color blue() { return new Color(64, 152, 255); }
     public Color cyan() { return new Color(190, 214, 255); }
     public Color green() { return new Color(127, 225, 115); }
@@ -19,14 +18,13 @@ public enum Theme {
     public Color yellow() { return new Color(255, 198, 109); }
     public Color bg() { return black(); }
     public Color fg() { return white(); }
-    public URL waiting() {
-      return Thread.currentThread().getContextClassLoader().getResource("org/crsh/image/waiting-shadow.gif");
-    }
+    public Color input() { return new Color(40, 40, 40);}
+    public Resources waiting() { return Resources.WAITING_DARK; }
   },
 
   LIGHT {
     public Color red() { return new Color(210, 82, 82); }
-    public Color black() {return new Color(50, 50, 50); }
+    public Color black() { return new Color(50, 50, 50); }
     public Color blue() { return new Color(64, 152, 255); }
     public Color cyan() { return new Color(190, 214, 255); }
     public Color green() { return new Color(127, 225, 115); }
@@ -35,9 +33,8 @@ public enum Theme {
     public Color yellow() { return new Color(255, 198, 109); }
     public Color bg() { return white(); }
     public Color fg() { return black(); }
-    public URL waiting() {
-      return Thread.currentThread().getContextClassLoader().getResource("org/crsh/image/waiting-light.gif");
-    }
+    public Color input() { return new Color(228, 228, 226); }
+    public Resources waiting() { return Resources.WAITING_LIGHT; }
 
   };
 
@@ -52,7 +49,8 @@ public enum Theme {
 
   public abstract Color bg();
   public abstract Color fg();
-  public abstract URL waiting();
+  public abstract Color input();
+  public abstract Resources waiting();
 
 
   @Override

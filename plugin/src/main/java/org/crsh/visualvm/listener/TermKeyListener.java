@@ -91,7 +91,7 @@ public class TermKeyListener implements KeyListener {
                   if (entry.getValue()) {
                     sb.append(completion.getDelimiter().getValue());
                   }
-                  int start = value.length() - (controller.caretPosition() - vc.getPrefix().length());
+                  int start = value.length() - (controller.inputCaretPosition() - vc.getPrefix().length());
                   JMenuItem item = new JMenuItem(sb.toString().substring(start));
                   item.setSelected(true);
                   item.addActionListener(new CompletionActionListener(controller));
