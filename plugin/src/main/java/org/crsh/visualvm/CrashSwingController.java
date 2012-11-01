@@ -100,6 +100,14 @@ public class CrashSwingController {
     topPanel.showConnect();
   }
 
+  public void snapshot() {
+    contentPanel.snapshot();
+  }
+
+  public void restore() {
+    contentPanel.restore();
+  }
+
   public void updateColor() {
 
     //Foreground

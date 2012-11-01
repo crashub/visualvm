@@ -18,6 +18,7 @@ public class ContentPanel extends JTextPane {
   private final CrashSwingController controller;
 
   private StyledDocument doc;
+  private StyledDocument snapshot;
 
   public ContentPanel(CrashSwingController controller, Font font, javax.swing.border.Border border) {
 
@@ -94,6 +95,14 @@ public class ContentPanel extends JTextPane {
     } catch (BadLocationException e) {
       e.printStackTrace();
     }
+  }
+
+  public void snapshot() {
+    snapshot = doc;
+  }
+
+  public void restore() {
+    setDocument(doc = snapshot);
   }
 
   public MutableAttributeSet buildTextAttribute(Style style) {

@@ -45,6 +45,16 @@ public class ExecuteProcessContext implements ShellProcessContext {
     return controller.getContentHeight();
   }
 
+  public boolean takeAlternateBuffer() {
+    controller.snapshot();
+    return true;
+  }
+
+  public boolean releaseAlternateBuffer() {
+    controller.restore();
+    return true;
+  }
+
   public String getProperty(String name) {
     return null;
   }
