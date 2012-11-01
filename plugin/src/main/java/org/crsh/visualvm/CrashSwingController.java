@@ -249,6 +249,11 @@ public class CrashSwingController {
    * History
    */
 
+  public void historyClear() {
+    history.clear();
+    historyPos = 0;
+  }
+
   public void historyAdd(String value) {
     history.add(value);
     historyPos = history.size();

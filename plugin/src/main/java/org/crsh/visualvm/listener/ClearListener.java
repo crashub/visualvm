@@ -19,6 +19,7 @@ public class ClearListener implements ActionListener {
   public void actionPerformed(ActionEvent e) {
     controller.clearContent();
     controller.inputFocus();
+    controller.historyClear();
   }
   
 }

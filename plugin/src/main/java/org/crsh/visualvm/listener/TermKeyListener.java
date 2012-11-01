@@ -68,6 +68,7 @@ public class TermKeyListener implements KeyListener {
 
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            controller.candidatesClear();
             String prefix = controller.inputReadToCaret();
             CommandCompletion completion = controller.complete(prefix);
             ValueCompletion vc = completion.getValue();
@@ -83,7 +84,6 @@ public class TermKeyListener implements KeyListener {
                 sb.append(completion.getDelimiter().getValue());
                 controller.insertCompletion(sb.toString());
               } else {
-                controller.candidatesClear();
                 for (Map.Entry<String, Boolean> entry : vc) {
                   StringBuilder sb = new StringBuilder();
                   sb.append(vc.getPrefix());
@@ -92,10 +92,13 @@ public class TermKeyListener implements KeyListener {
                     sb.append(completion.getDelimiter().getValue());
                   }
                   int start = value.length() - (controller.inputCaretPosition() - vc.getPrefix().length());
-                  JMenuItem item = new JMenuItem(sb.toString().substring(start));
-                  item.setSelected(true);
-                  item.addActionListener(new CompletionActionListener(controller));
-                  controller.candidatesAdd(item);
+                  String label = sb.toString().substring(start);
+                  if (label.length() > 0) {
+                    JMenuItem item = new JMenuItem();
+                    item.setSelected(true);
+                    item.addActionListener(new CompletionActionListener(controller));
+                    controller.candidatesAdd(item);
+                  }
 
                 }
 
