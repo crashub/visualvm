@@ -6,7 +6,7 @@ import org.crsh.visualvm.Theme;
 import org.crsh.visualvm.listener.DeployAgentListener;
 import org.crsh.visualvm.listener.OpenConfigListener;
 import org.crsh.visualvm.listener.SelectThemeListener;
-import org.crsh.visualvm.listener.UndeployAgentListener;
+import org.crsh.visualvm.listener.UnDeployAgentListener;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,7 +58,7 @@ public class TopPanel extends JPanel {
     add(rightPanel, BorderLayout.EAST);
 
     connectButton.addActionListener(new DeployAgentListener(controller));
-    disconnectButton.addActionListener(new UndeployAgentListener(controller));
+    disconnectButton.addActionListener(new UnDeployAgentListener(controller));
     themesCombo.addItemListener(new SelectThemeListener(controller));
     configButton.addActionListener(new OpenConfigListener(controller));
 

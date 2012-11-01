@@ -8,11 +8,11 @@ import java.awt.event.ActionListener;
 /**
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
  */
-public class UndeployAgentListener implements ActionListener {
+public class UnDeployAgentListener implements ActionListener {
 
   private CrashSwingController controller;
 
-  public UndeployAgentListener(CrashSwingController controller) {
+  public UnDeployAgentListener(CrashSwingController controller) {
     this.controller = controller;
   }
 
