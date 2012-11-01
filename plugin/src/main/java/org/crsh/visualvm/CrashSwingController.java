@@ -8,6 +8,7 @@ import org.crsh.shell.Shell;
 import org.crsh.shell.ShellProcess;
 import org.crsh.shell.impl.remoting.RemoteServer;
 import org.crsh.visualvm.context.ExecuteProcessContext;
+import org.crsh.visualvm.listener.DeployAgentListener;
 import org.crsh.visualvm.ui.BottomPanel;
 import org.crsh.visualvm.ui.ContentPanel;
 import org.crsh.visualvm.ui.TopPanel;
@@ -42,6 +43,9 @@ public class CrashSwingController {
   private Shell shell;
   private String prompt;
 
+  private JPanel connectPanel;
+  private JButton connectButton;
+
   private final List<String> history;
   private int historyPos = 0;
   private ShellProcess process;
@@ -71,9 +75,11 @@ public class CrashSwingController {
 
     //
     pane = new WaitingPanel(theme.waiting());
+    connectPanel = new JPanel(new GridBagLayout());
     candidates = new JPopupMenu();
     Font font = new Font("Monospaced", Font.PLAIN, 12);
     Border border = BorderFactory.createEmptyBorder(14, 8, 14, 8);
+    connectButton = new JButton(Resources.CONNECT.asIcon());
 
     //
     topPanel = new TopPanel(this);
@@ -81,23 +87,34 @@ public class CrashSwingController {
     bottomPane = new BottomPanel(this, font, border);
     scrolledContent = contentPanel.asScrollable();
 
+    connectPanel.setBackground(new Color(0,0,0,0));
+    connectPanel.add(connectButton, new GridBagConstraints());
+
     pane.add(topPanel, BorderLayout.NORTH);
+    pane.add(connectPanel, BorderLayout.CENTER);
+
+    connectButton.addActionListener(new DeployAgentListener(this));
+    
     setCrashHome(readData("crash.home", System.getProperty("user.home") + "/crash"));
     updateColor();
 
   }
 
   public void showTerminal() {
+    pane.remove(connectPanel);
     pane.add(scrolledContent, BorderLayout.CENTER);
     pane.add(bottomPane, BorderLayout.SOUTH);
-    topPanel.showDisconnect();
     inputFocus();
+    topPanel.showDisconnect();
+    pane.repaint();
   }
 
   public void reinitUI() {
     pane.remove(scrolledContent);
     pane.remove(bottomPane);
-    topPanel.showConnect();
+    pane.add(connectPanel, BorderLayout.CENTER);
+    topPanel.hideDisconnect();
+    pane.repaint();
   }
 
   public void clearContent() {
