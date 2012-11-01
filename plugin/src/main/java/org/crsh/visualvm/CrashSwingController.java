@@ -100,6 +100,10 @@ public class CrashSwingController {
     topPanel.showConnect();
   }
 
+  public void clearContent() {
+    contentPanel.clear();
+  }
+
   public void snapshot() {
     contentPanel.snapshot();
   }

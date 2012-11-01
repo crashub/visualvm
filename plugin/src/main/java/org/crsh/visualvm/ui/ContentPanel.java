@@ -97,6 +97,10 @@ public class ContentPanel extends JTextPane {
     }
   }
 
+  public void clear() {
+    setText("");
+  }
+
   public void snapshot() {
     snapshot = doc;
   }

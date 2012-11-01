@@ -10,6 +10,7 @@ import java.net.URL;
 public enum Resources {
 
   ICON("icon.png"),
+  CLEAR("clear.png"),
   CONNECT("connect.png"),
   DISCONNECT("disconnect.png"),
   CONFIG("config.png"),
