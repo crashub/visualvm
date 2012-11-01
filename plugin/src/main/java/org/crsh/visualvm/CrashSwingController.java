@@ -72,7 +72,7 @@ public class CrashSwingController {
     //
     pane = new WaitingPanel(theme.waiting());
     candidates = new JPopupMenu();
-    Font font = new Font("Monospaced", Font.PLAIN, 14);
+    Font font = new Font("Monospaced", Font.PLAIN, 12);
     Border border = BorderFactory.createEmptyBorder(14, 8, 14, 8);
 
     //
