@@ -272,6 +272,7 @@ public class CrashSwingController {
       bottomPane.moveCaretToEnd();
     }
     else {
+      historyPos = history.size();
       bottomPane.setText("");
     }
   }
