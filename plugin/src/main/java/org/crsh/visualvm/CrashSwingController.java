@@ -344,6 +344,7 @@ public class CrashSwingController {
   public void inputEnable() {
     bottomPane.setEnabled(true);
     bottomPane.setText(inputBuffer.toString());
+    bottomPane.moveCaretToEnd();
   }
 
   public void inputClear() {
@@ -437,6 +438,7 @@ public class CrashSwingController {
   public void cancelProcess() {
     if (process != null && processCtx != null) {
       process.cancel();
+      processCtx.cancel();
       contentPanel.setFocusable(true);
       pane.setWaiting(false);
       contentPanel.append("\nCommand interrupted\n");

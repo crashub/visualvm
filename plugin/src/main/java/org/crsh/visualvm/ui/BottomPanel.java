@@ -81,13 +81,12 @@ public class BottomPanel extends JPanel {
     if (enabled) {
       input.setEditable(true);
       input.setCaretColor(getForeground());
-      input.addKeyListener(keyListener);
       moveCaretToEnd();
     } else {
       input.setEditable(false);
       input.setCaretColor(controller.getTheme().input());
-      input.removeKeyListener(keyListener);
     }
+    keyListener.setEnabled(enabled);
   }
 
   @Override

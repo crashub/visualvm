@@ -17,6 +17,7 @@ import java.util.Map;
 public class TermKeyListener implements KeyListener {
 
   private final CrashSwingController controller;
+  private boolean enabled;
 
   public TermKeyListener(CrashSwingController controller) {
 
@@ -25,10 +26,16 @@ public class TermKeyListener implements KeyListener {
     }
 
     this.controller = controller;
+    this.enabled = true;
 
   }
 
   public void keyPressed(KeyEvent e) {
+
+    if (!enabled) {
+      e.consume();
+      return;
+    }
 
     final String value = controller.inputRead();
 
@@ -94,8 +101,7 @@ public class TermKeyListener implements KeyListener {
                   int start = value.length() - (controller.inputCaretPosition() - vc.getPrefix().length());
                   String label = sb.toString().substring(start);
                   if (label.length() > 0) {
-                    JMenuItem item = new JMenuItem();
-                    item.setSelected(true);
+                    JMenuItem item = new JMenuItem(label);
                     item.addActionListener(new CompletionActionListener(controller));
                     controller.candidatesAdd(item);
                   }
@@ -115,5 +121,8 @@ public class TermKeyListener implements KeyListener {
 
   public void keyTyped(KeyEvent e) {}
   public void keyReleased(KeyEvent e) {}
-  
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
 }

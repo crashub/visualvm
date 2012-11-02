@@ -23,6 +23,7 @@ public class ExecuteProcessContext implements ShellProcessContext {
 
   private final List<ResultOuput> buffer;
   private boolean cleared;
+  private boolean canceled;
 
   private Style style;
 
@@ -64,13 +65,15 @@ public class ExecuteProcessContext implements ShellProcessContext {
   }
 
   public void flush() {
-    if (cleared) {
-      controller.reloadContent(Collections.unmodifiableList(buffer), new DefaultStyledDocument());
-      cleared = false;
-    } else {
-      controller.append(Collections.unmodifiableList(buffer));
+    if (!canceled) {
+      if (cleared) {
+        controller.reloadContent(Collections.unmodifiableList(buffer), new DefaultStyledDocument());
+        cleared = false;
+      } else {
+        controller.append(Collections.unmodifiableList(buffer));
+      }
+      buffer.clear();
     }
-    buffer.clear();
   }
 
   public void end(ShellResponse response) {
@@ -100,6 +103,10 @@ public class ExecuteProcessContext implements ShellProcessContext {
       cleared = true;
     }
 
+  }
+
+  public void cancel() {
+    canceled = true;
   }
 
   public class ResultOuput {

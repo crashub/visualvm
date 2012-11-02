@@ -3,6 +3,7 @@ package org.crsh.visualvm;
 import com.sun.tools.visualvm.application.Application;
 import com.sun.tools.visualvm.core.ui.DataSourceView;
 import com.sun.tools.visualvm.core.ui.components.DataViewComponent;
+import org.crsh.visualvm.listener.InitFocusListener;
 
 import java.awt.*;
 
@@ -37,6 +38,7 @@ public class CrashView extends DataSourceView {
     //
     DataViewComponent dvc = new DataViewComponent(masterView, masterConfiguration);
     dvc.setBackground(Color.BLACK);
+    dvc.addAncestorListener(new InitFocusListener(controller));
 
     //
     dvc.setLayout(new BorderLayout());
