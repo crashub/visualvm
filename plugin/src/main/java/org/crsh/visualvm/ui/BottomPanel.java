@@ -82,10 +82,13 @@ public class BottomPanel extends JPanel {
       input.setEditable(true);
       input.setCaretColor(getForeground());
       moveCaretToEnd();
+      input.setBackground(controller.getTheme().input());
     } else {
       input.setEditable(false);
       input.setCaretColor(controller.getTheme().input());
+      input.setBackground(controller.getTheme().bg());
     }
+    promptLabel.setVisible(enabled);
     keyListener.setEnabled(enabled);
   }
 
