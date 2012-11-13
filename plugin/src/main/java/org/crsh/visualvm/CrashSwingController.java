@@ -150,7 +150,7 @@ public class CrashSwingController {
 
     Properties properties = new Properties();
     try {
-      properties.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("org/crsh/visualvm/conf.properties"));
+      properties.load(getClass().getClassLoader().getResourceAsStream("org/crsh/visualvm/conf.properties"));
     } catch (IOException e) {
       fail(e);
     }
