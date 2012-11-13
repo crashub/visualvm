@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <!DOCTYPE module_updates PUBLIC "-//NetBeans//DTD Autoupdate Catalog 2.4//EN" "http://www.netbeans.org/dtds/autoupdate-catalog-2_4.dtd">
-<module_updates timestamp="42/53/12/13/11/2012">
+<module_updates timestamp="33/18/16/13/11/2012">
 
 
 
-<module codenamebase="org.crash" distribution="crash-visualvm-plugin-1.0.0-alpha1-SNAPSHOT.nbm" downloadsize="12728055" homepage="http://www.crashub.org/visualvm/plugin/" license="D40C04C3" moduleauthor="Alain Defrance" needsrestart="false" releasedate="2012/11/13" targetcluster="extra">
-    <manifest OpenIDE-Module="org.crash/0" OpenIDE-Module-Display-Category="Tools" OpenIDE-Module-Implementation-Version="1.0.0-alpha1-20121113" OpenIDE-Module-Module-Dependencies="com.sun.tools.visualvm.core/0 &gt; 1.4, com.sun.tools.visualvm.application/0 &gt; 1.4" OpenIDE-Module-Name="Crash" OpenIDE-Module-Requires="org.openide.modules.ModuleFormat1" OpenIDE-Module-Specification-Version="1.0.0.1211131350"/>
+<module codenamebase="org.crash" distribution="crash-visualvm-plugin-1.0.0-alpha1-SNAPSHOT.nbm" downloadsize="12728446" homepage="http://www.crashub.org/visualvm/plugin/" license="D40C04C3" moduleauthor="Alain Defrance" needsrestart="false" releasedate="2012/11/13" targetcluster="extra">
+    <manifest OpenIDE-Module="org.crash/0" OpenIDE-Module-Display-Category="Tools" OpenIDE-Module-Implementation-Version="1.0.0-alpha1-20121113" OpenIDE-Module-Module-Dependencies="com.sun.tools.visualvm.core/0 &gt; 1.4, com.sun.tools.visualvm.application/0 &gt; 1.4" OpenIDE-Module-Name="Crash" OpenIDE-Module-Requires="org.openide.modules.ModuleFormat1" OpenIDE-Module-Specification-Version="1.0.0.1211131716"/>
     
 </module>
 
