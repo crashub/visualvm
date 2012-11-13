@@ -24,7 +24,7 @@ public enum Resources {
   }
 
   public URL url() {
-    return Thread.currentThread().getContextClassLoader().getResource("org/crsh/image/" + name);
+    return getClass().getClassLoader().getResource("org/crsh/image/" + name);
   }
 
   public ImageIcon asIcon() {
