@@ -80,6 +80,7 @@ public class CrashSwingController {
     Font font = new Font("Monospaced", Font.PLAIN, 12);
     Border border = BorderFactory.createEmptyBorder(14, 8, 14, 8);
     connectButton = new JButton(Resources.CONNECT.asIcon());
+    connectButton.setToolTipText("Connect");
 
     //
     topPanel = new TopPanel(this);

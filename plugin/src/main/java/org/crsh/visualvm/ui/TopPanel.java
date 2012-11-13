@@ -29,12 +29,16 @@ public class TopPanel extends JPanel {
 
     //
     themesCombo = new JComboBox(new Theme[]{ Theme.DARK, Theme.LIGHT });
+    themesCombo.setToolTipText("Change theme");
     themesCombo.setSelectedItem(controller.getTheme());
 
     //
     configButton = new JButton(Resources.CONFIG.asIcon());
+    configButton.setToolTipText("Configure");
     disconnectButton = new JButton(Resources.DISCONNECT.asIcon());
+    disconnectButton.setToolTipText("Disconnect");
     clearButton = new JButton(Resources.CLEAR.asIcon());
+    clearButton.setToolTipText("Clear");
 
     //
     rightPanel = new JPanel();
