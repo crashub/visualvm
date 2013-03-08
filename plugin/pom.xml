@@ -18,7 +18,10 @@
     <dependency>
       <groupId>org.crsh</groupId>
       <artifactId>crsh.shell.core</artifactId>
-      <classifier>standalone</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.crsh</groupId>
+      <artifactId>crsh.cmdline</artifactId>
     </dependency>
     <dependency>
       <groupId>com.sun.tools.visualvm</groupId>
@@ -34,9 +37,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>com.googlecode.lanterna</groupId>
-      <artifactId>lanterna</artifactId>
-      <version>2.2.0-SNAPSHOT</version>
+      <groupId>org.codehaus.groovy</groupId>
+      <artifactId>groovy-all</artifactId>
     </dependency>
   </dependencies>
 

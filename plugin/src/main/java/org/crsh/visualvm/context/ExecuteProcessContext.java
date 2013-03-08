@@ -105,6 +105,10 @@ public class ExecuteProcessContext implements ShellProcessContext {
 
   }
 
+  public Class<Chunk> getConsumedType() {
+    return Chunk.class;
+  }
+
   public void cancel() {
     canceled = true;
   }

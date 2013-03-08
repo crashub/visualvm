@@ -3,10 +3,11 @@ package org.crsh.visualvm;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.visualvm.application.Application;
 import com.sun.tools.visualvm.core.datasource.Storage;
-import org.crsh.cmdline.CommandCompletion;
+import org.crsh.cmdline.completion.CompletionMatch;
 import org.crsh.shell.Shell;
 import org.crsh.shell.ShellProcess;
 import org.crsh.shell.impl.remoting.RemoteServer;
+import org.crsh.standalone.Agent;
 import org.crsh.visualvm.context.ExecuteProcessContext;
 import org.crsh.visualvm.listener.DeployAgentListener;
 import org.crsh.visualvm.ui.BottomPanel;
@@ -19,10 +20,13 @@ import javax.swing.border.Border;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Properties;
+import java.util.jar.Attributes;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 /**
  * @author <a href="mailto:alain.defrance@exoplatform.com">Alain Defrance</a>
@@ -147,15 +151,23 @@ public class CrashSwingController {
     pane.updateImage(theme.waiting());
   }
 
-  private String agentPath() {
-
-    Properties properties = new Properties();
-    try {
-      properties.load(getClass().getClassLoader().getResourceAsStream("org/crsh/visualvm/conf.properties"));
-    } catch (IOException e) {
-      fail(e);
+  private Set<String> findDependencies(File base) {
+    Set<String> dependencies = new HashSet<String>();
+    for (File sub : base.listFiles()) {
+      if (!sub.isHidden()) {
+        if (sub.isFile()) {
+          dependencies.add(sub.getAbsolutePath().replaceAll(" ", "%20"));
+        } else if (sub.isDirectory()) {
+          dependencies.addAll(findDependencies(sub));
+        }
+      }
     }
+    return dependencies;
+  }
 
+  private String agentPath() throws IOException {
+
+    // Get lib directory
     String home = System.getProperty("netbeans.user");
     String separator = System.getProperty("file.separator");
     StringBuilder sb = new StringBuilder();
@@ -164,14 +176,27 @@ public class CrashSwingController {
     sb.append("modules");
     sb.append(separator);
     sb.append("ext");
-    sb.append(separator);
-    sb.append("org.crsh");
-    sb.append(separator);
-    sb.append("crsh.shell.core-");
-    sb.append(properties.getProperty("crash.version"));
-    sb.append("-standalone.jar");
 
-    return sb.toString();
+    // Build rmanifest string
+    StringBuilder buffer = new StringBuilder();
+    for (String path : findDependencies(new File(sb.toString()))) {
+      buffer.append(path);
+      buffer.append(' ');
+    }
+
+    // Create manifest
+    Manifest manifest = new Manifest();
+    Attributes attributes = manifest.getMainAttributes();
+    attributes.putValue("Agent-Class", Agent.class.getName());
+    attributes.put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    attributes.put(Attributes.Name.CLASS_PATH, buffer.toString());
+
+    // Create jar file
+    File agentFile = File.createTempFile("agent", ".jar");
+    agentFile.deleteOnExit();
+    JarOutputStream out = new JarOutputStream(new FileOutputStream(agentFile), manifest);
+    out.close();
+    return agentFile.getAbsolutePath();
 
   }
 
@@ -425,7 +450,7 @@ public class CrashSwingController {
     process.execute(processCtx);
   }
 
-  public CommandCompletion complete(String prefix) {
+  public CompletionMatch complete(String prefix) {
     return shell.complete(prefix);
   }
   public boolean isWaiting() {

@@ -1,7 +1,7 @@
 package org.crsh.visualvm.listener;
 
-import org.crsh.cmdline.CommandCompletion;
 import org.crsh.cmdline.Delimiter;
+import org.crsh.cmdline.completion.CompletionMatch;
 import org.crsh.cmdline.spi.Completion;
 import org.crsh.visualvm.CrashSwingController;
 
@@ -77,7 +77,7 @@ public class TermKeyListener implements KeyListener {
           public void run() {
             controller.candidatesClear();
             String prefix = controller.inputReadToCaret();
-            CommandCompletion completion = controller.complete(prefix);
+            CompletionMatch completion = controller.complete(prefix);
             Completion vc = completion.getValue();
             if (vc.isEmpty()) {
               return;
