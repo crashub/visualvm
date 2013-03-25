@@ -11,6 +11,7 @@ import org.crsh.visualvm.CrashSwingController;
 import javax.swing.text.DefaultStyledDocument;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -77,6 +78,11 @@ public class ExecuteProcessContext implements ShellProcessContext {
   }
 
   public void end(ShellResponse response) {
+
+    if (response instanceof ShellResponse.UnknownCommand) {
+      ResultOuput output = new ResultOuput(response.getMessage(), null);
+      controller.append(Arrays.asList(output));
+    }
 
     if (controller.isWaiting()) {
       controller.setWaiting(false);
