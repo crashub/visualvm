@@ -65,6 +65,7 @@ public class ConfigFrame extends JDialog {
       }
     });
 
+    setPreferredSize(new Dimension(500, 100));
     pack();
     setResizable(false);
 
