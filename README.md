@@ -12,7 +12,7 @@ CRaSH plugin are built with Maven.
 
 First you need to add two repositories:
 
-<pre><code>
+```xml
 <profile>
   <id>crash-visualvm-repositories</id>
   <repositories>
@@ -28,7 +28,7 @@ First you need to add two repositories:
     </repository>
   </repositories>
 </profile>
-</code></pre>
+```
 
 Then build the maven project:
 
