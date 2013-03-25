@@ -21,7 +21,7 @@
     </dependency>
     <dependency>
       <groupId>org.crsh</groupId>
-      <artifactId>crsh.cmdline</artifactId>
+      <artifactId>crsh.cli</artifactId>
     </dependency>
     <dependency>
       <groupId>com.sun.tools.visualvm</groupId>

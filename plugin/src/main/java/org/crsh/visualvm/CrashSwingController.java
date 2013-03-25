@@ -3,7 +3,7 @@ package org.crsh.visualvm;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.visualvm.application.Application;
 import com.sun.tools.visualvm.core.datasource.Storage;
-import org.crsh.cmdline.completion.CompletionMatch;
+import org.crsh.cli.impl.completion.CompletionMatch;
 import org.crsh.shell.Shell;
 import org.crsh.shell.ShellProcess;
 import org.crsh.shell.impl.remoting.RemoteServer;
@@ -243,7 +243,7 @@ public class CrashSwingController {
       options.append(cmdDir.getAbsolutePath());
       options.append(" --conf ");
       options.append(confDir.getAbsolutePath());
-      options.append(" ");
+      options.append(" --cmd-mode read --conf-mode read ");
       options.append(String.valueOf(listen(server)));
 
       VirtualMachine vm = VirtualMachine.attach("" + this.application.getPid());

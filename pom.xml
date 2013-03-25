@@ -21,7 +21,7 @@
 
     <netbeans.version>RELEASE72</netbeans.version>
     <visualvm.version>1.4</visualvm.version>
-    <crash.version>1.2.0-cr7-SNAPSHOT</crash.version>
+    <crash.version>1.2.0-cr10</crash.version>
     <nbm.plugin.version>3.8</nbm.plugin.version>
     <jar.plugin.version>2.2</jar.plugin.version>
     <helper.plugin.version>1.7</helper.plugin.version>
@@ -50,7 +50,7 @@
       </dependency>
       <dependency>
         <groupId>org.crsh</groupId>
-        <artifactId>crsh.cmdline</artifactId>
+        <artifactId>crsh.cli</artifactId>
         <version>${crash.version}</version>
       </dependency>
 
