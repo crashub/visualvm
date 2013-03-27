@@ -25,6 +25,7 @@
     <nbm.plugin.version>3.8</nbm.plugin.version>
     <jar.plugin.version>2.2</jar.plugin.version>
     <helper.plugin.version>1.7</helper.plugin.version>
+    <tools.jar>${java.home}/../lib/tools.jar</tools.jar>
   </properties>
 
   <modules>
@@ -127,5 +128,19 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <profile>
+      <id>mac</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <properties>
+        <tools.jar>${java.home}/../Classes/classes.jar</tools.jar>
+      </properties>
+    </profile>
+  </profiles>
     
 </project>
