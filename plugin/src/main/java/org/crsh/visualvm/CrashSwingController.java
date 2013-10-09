@@ -180,7 +180,13 @@ public class CrashSwingController {
     // Build rmanifest string
     StringBuilder buffer = new StringBuilder();
     for (String path : findDependencies(new File(sb.toString()))) {
-      buffer.append(path);
+      // prepend the separator if does not exist (needed for Windows)
+      if(!path.startsWith(separator)) {
+        buffer.append(separator + path);
+      } else {
+        buffer.append(path);
+      }
+
       buffer.append(' ');
     }
 
